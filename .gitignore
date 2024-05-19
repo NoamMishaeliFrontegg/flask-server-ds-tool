@@ -1,0 +1,57 @@
+# Ignore .env files
+.env
+.env.*
+
+# Ignore Python bytecode files and directories
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore all __pycache__ directories at any level
+**/__pycache__/
+
+# Ignore additional common Python artifacts
+*.pyd
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv
+
+# Ignore other common files and directories
+*.log
+*.pot
+*.mo
+*.cache
+*.coverage
+*.cover
+*.pyc
+*.pyo
+*.pyd
+*.pyo
+*.pyd
+*.log
+*.pot
+*.mo
+**/instance/
+**/.webassets-cache
+**/.scrapy
+**/docs/_build/
+**/target/
+**/.ipynb_checkpoints
+**/.pytest_cache/
+**/.mypy_cache/
+**/.tox/
+**/.nox/
+**/htmlcov/
+**/.hypothesis/
+
+# Ignore IDE specific files
+.vscode/
+.idea/
+
