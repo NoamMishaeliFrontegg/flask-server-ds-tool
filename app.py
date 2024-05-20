@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import json
 from flask_cors import CORS
 from db_and_queries.functions_and_queries import check_customer_region, find_user_roles_in_db, remove_trial_process
-from db_and_queries.utilis import validate_uuid
+from db_and_queries.utilis import authenticate_as_vendor, get_production_env_variables, request_white_lable, validate_uuid
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -25,12 +25,12 @@ def find_customer_region():
             if customer_region:
                 return jsonify(customer_region)
             
-            return jsonify({'result': 'An error occured'})
+            return jsonify({'Error': 'An error occured'})
 
-        return jsonify({'result': 'Invalid ID!'})
+        return jsonify({'Error': 'Invalid ID!'})
                 
     else:
-        return 'Method not allowed'
+        return jsonify({'Error': 'Method not allowed'})
     
 @app.route('/remove_trial', methods=['GET', 'POST'])
 def remove_trial():
@@ -50,10 +50,10 @@ def remove_trial():
             if result:
                 return jsonify(result)
 
-        return jsonify({'result': 'Invalid ID!'})
+        return jsonify({'Error': 'Invalid ID!'})
     
     else:
-        return 'Method not allowed'
+        return jsonify({'Error': 'Method not allowed'})
     
 @app.route('/user_roles_db', methods=['GET', 'POST'])
 def find_users_roles_db():
@@ -70,7 +70,54 @@ def find_users_roles_db():
     
     else:
         return 'Method not allowed'
+
+@app.route('/white_label', methods=['POST'])
+def white_label():
+    if request.method == 'POST':
+        data = json.loads(request.data)
+        vendor_id = data.get('vendorId', '')
+        is_enabled = data.get('isEnabled', '')
+        stripped_vendor_id = str(vendor_id).strip('\'"')
+        is_valid = validate_uuid(uuid_string=stripped_vendor_id)
+        
+        if not is_valid:
+            return jsonify({'Error': 'Invalid ID'})
+        
+        if bool(is_enabled):
+            production_client_id, production_secret = get_production_env_variables()
+
+            auth_response = authenticate_as_vendor(
+                production_client_id=production_client_id, 
+                production_client_secret=production_secret
+                )
+
+            response = request_white_lable(
+                is_enabled=is_enabled, 
+                vendor_id=vendor_id, 
+                token=auth_response.get('token')
+                )
+            
+            return jsonify(response)        
+        
+        return jsonify({'Error': 'You selected the body-param as disabled'})
     
+    else:
+        return jsonify({'Error': 'Method not allowed'})
+
+@app.route('/validate_uuid', methods=['GET'])
+def validate_uuid_from_ui():
+    if request.method == 'GET':
+        id = request.args.get('id')
+        stripped_id = str(id).strip('\'"')
+        is_valid = validate_uuid(uuid_string=stripped_id)
+        
+        if is_valid:
+            return jsonify({"isValid": True})
+
+        return jsonify({"isValid": False})
+    
+    else:
+        return jsonify({'Error': 'Method not allowed'})
     
 if __name__ == '__main__':
     app.run(debug=True)
