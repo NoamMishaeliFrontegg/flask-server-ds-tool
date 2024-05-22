@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import json
 from flask_cors import CORS
-from db_and_queries.functions_and_queries import check_customer_region, find_user_roles_in_db, remove_trial_process
+from db_and_queries.queries_and_handlers import check_customer_region, find_user_roles_in_db, remove_trial_process, get_account_id_by_vendor_id, get_environments_ids_by_account_id
 from db_and_queries.utilis import authenticate_as_vendor, get_production_env_variables, request_white_lable, validate_uuid
 
 app = Flask(__name__)
@@ -79,7 +79,8 @@ def white_label():
         is_enabled = data.get('isEnabled', '')
         stripped_vendor_id = str(vendor_id).strip('\'"')
         is_valid = validate_uuid(uuid_string=stripped_vendor_id)
-        
+        white_label_counter = 0
+
         if not is_valid:
             return jsonify({'Error': 'Invalid ID'})
         
@@ -90,14 +91,25 @@ def white_label():
                 production_client_id=production_client_id, 
                 production_client_secret=production_secret
                 )
-
-            response = request_white_lable(
-                is_enabled=is_enabled, 
-                vendor_id=vendor_id, 
-                token=auth_response.get('token')
-                )
+        
+            account_id = get_account_id_by_vendor_id(vendor_id=stripped_vendor_id, region='EU')
             
-            return jsonify(response)        
+            if account_id:
+                env_ids = get_environments_ids_by_account_id(account_id=account_id, region='EU')            
+
+            if env_ids:
+                for id in env_ids:    
+
+                    response = request_white_lable(
+                        is_enabled=is_enabled, 
+                        vendor_id=id, 
+                        token=auth_response.get('token')
+                        )
+                    
+                    if response.get('status_code') == 200:
+                        white_label_counter += 1
+                        
+                return jsonify({'number_of_envs': len(env_ids), 'white_labeled': white_label_counter})        
         
         return jsonify({'Error': 'You selected the body-param as disabled'})
     

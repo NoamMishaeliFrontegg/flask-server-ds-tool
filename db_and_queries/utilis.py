@@ -117,6 +117,6 @@ def request_white_lable(is_enabled: bool, vendor_id: str, token: str) -> Tuple[s
         "enabled": is_enabled
     }   
 
-    response = requests.request("GET", url, headers=headers, json=payload)
+    response = requests.request("PUT", url, headers=headers, json=payload)
     
     return {"status_code": response.status_code, "text": response.text}
