@@ -17,5 +17,5 @@ GET_SAML_GROUPS_BY_SSO_CONFIG_ID = 'SELECT * FROM frontegg_team_management.saml_
 
 AND_DOMAIN = 'AND sd.domain = {}'
 
-REGIONS = ['EU']
+REGIONS = ['EU', 'US']
 # REGIONS = ['EU', 'US', 'CA', 'AU']

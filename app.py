@@ -1,7 +1,16 @@
+import os
+import sys
+
+# Get the project root directory
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+
+# Add the project root directory to the Python path
+sys.path.append(PROJECT_ROOT)
+
 from flask import Flask, request, jsonify
 import json
 from flask_cors import CORS
-from db_and_queries.queries_and_handlers import check_customer_region, find_user_roles_in_db, remove_trial_process, get_account_id_by_vendor_id, get_environments_ids_by_account_id
+from db_and_queries.handlers import check_customer_region, find_user_roles_in_db, remove_trial_process, get_account_id_by_vendor_id, get_environments_ids_by_account_id
 from db_and_queries.utilis import authenticate_as_vendor, get_production_env_variables, request_white_lable, validate_uuid
 
 app = Flask(__name__)
@@ -10,12 +19,13 @@ CORS(app)  # Enable CORS for all routes
 @app.route('/find_customer_region', methods=['GET', 'POST'])
 def find_customer_region():
     if request.method == 'GET':
-        return f'This is a GET request'
+        return f'GET request is not available'
     
     elif request.method == 'POST':
         data = json.loads(request.data)
         selected_option = data.get('selectedOption', '')
         query_id = data.get('queryId', '')
+        
         stripped_query_id = str(query_id).strip('\'"')
         is_valid = validate_uuid(uuid_string=stripped_query_id)
         
@@ -35,22 +45,23 @@ def find_customer_region():
 @app.route('/remove_trial', methods=['GET', 'POST'])
 def remove_trial():
     if request.method == 'GET':
-        print("asd")
-        return f'This is a GET request'
+        return f'GET request is not available'
     
     elif request.method == 'POST':
         data = json.loads(request.data)
         vendor_id = data.get('vendorId', '')
+        region = data.get('region', None)
+        
         stripped_vendor_id = str(vendor_id).strip('\'"')
         is_valid = validate_uuid(uuid_string=stripped_vendor_id)
 
         if is_valid:
-            result = remove_trial_process(vendor_id=stripped_vendor_id)
+            result = remove_trial_process(vendor_id=stripped_vendor_id, region=region)
             
             if result:
                 return jsonify(result)
 
-        return jsonify({'Error': 'Invalid ID!'})
+        return jsonify({'Error': ['Invalid ID!', 'Wrong Region']})
     
     else:
         return jsonify({'Error': 'Method not allowed'})
@@ -109,7 +120,7 @@ def white_label():
                     if response.get('status_code') == 200:
                         white_label_counter += 1
                         
-                return jsonify({'number_of_envs': len(env_ids), 'white_labeled': white_label_counter})        
+                return jsonify({'status_code': 200, 'number_of_envs': len(env_ids), 'white_labeled': white_label_counter})        
         
         return jsonify({'Error': 'You selected the body-param as disabled'})
     
@@ -132,4 +143,6 @@ def validate_uuid_from_ui():
         return jsonify({'Error': 'Method not allowed'})
     
 if __name__ == '__main__':
-    app.run(debug=True)
+    # asdasd = check_customer_region(id_type='vendor', id='d058e199-6ed3-4049-8034-447bbd5004e9')
+    # print('main:check_customer_region2:   ', asdasd)
+    print("asd")
