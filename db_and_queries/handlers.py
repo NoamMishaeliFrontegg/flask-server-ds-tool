@@ -1,8 +1,10 @@
 from typing import Optional
+from enum import Enum
+
 from .consts import *
 from .connections_and_queries import *
-from enum import Enum
 from .utilis import *
+
 
 class QueryEnum(Enum):
     tenant = GET_ACCOUNT_BY_ID_QUERY
@@ -83,6 +85,82 @@ def get_account_id_by_vendor_id(vendor_id: str, region: str) -> Optional[str]:
     db.close()     
         
     return None
+
+def get_domains_by_vendor_id(vendor_id: str, region: Optional[str] = None) -> Optional[Dict]:
+    if not region:
+        data = check_in_all_dbs(func=fetching_domains_by_vendor_id, vendor_id=vendor_id)
+                
+    else:
+        db = connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
+        cursor = db.cursor()
+        data = fetching_domains_by_vendor_id(cursor=cursor, vendor_id=vendor_id)
+        db.close()     
+        
+    if data:
+        return data
+
+    """
+    if data.get('result'):
+            # res = data.get("result")
+            res = {'domains': [], 'ssoConfigId': []}
+            
+            for row in data.get('result'):
+                res['domains'].append(row.get("domain"))
+                res['ssoConfigId'].append(row.get("ssoConfigId"))
+
+                # print(row.get("domain"))
+                # print(row.get("ssoConfigId"), "\n")
+            return res
+        
+    """
+   
+    return None
+
+def get_sso_config_id_by_domain_and_vendor_id(vendor_id: str, domain: str, region: Optional[str] = None) -> Optional[Dict]:
+    if not region:
+        data = check_in_all_dbs(func=fetching_sso_config_id_by_domain_and_vendor_id, vendor_id=vendor_id, domain=domain)
+                
+    else:
+        db = connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
+        cursor = db.cursor()
+        data = fetching_sso_config_id_by_domain_and_vendor_id(cursor=cursor, vendor_id=vendor_id, domain=domain)
+        db.close()     
+        
+    if data:
+        return data
+    
+    return None
+
+def get_sso_configs_by_config_id(config_id: str, region: Optional[str] = None) -> Optional[Dict]:
+    if not region:
+        data = check_in_all_dbs(func=fetching_sso_configs_by_config_id, config_id=config_id)
+                
+    else:
+        db = connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
+        cursor = db.cursor()
+        data = fetching_sso_configs_by_config_id(cursor=cursor,  config_id=config_id)
+        db.close()     
+        
+    if data:
+        return data
+    
+    return None
+
+def get_saml_groups_by_config_id(config_id: str, region: Optional[str] = None) -> Optional[Dict]:
+    if not region:
+        data = check_in_all_dbs(func=fetching_saml_groups_by_config_id, config_id=config_id)
+        
+    else:
+        db = connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
+        cursor = db.cursor()
+        data = fetching_saml_groups_by_config_id(cursor=cursor,  config_id=config_id)
+        db.close()     
+        
+    if data:
+        return data
+    
+    return None
+
 
 
 

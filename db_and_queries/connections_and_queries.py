@@ -57,8 +57,37 @@ def fetch_all_query(cursor: mysql.connector.cursor_cext.CMySQLCursor, query: str
     Returns:
         Tuple: _description_
     """
-    cursor.execute(query)
-    return cursor.fetchall()
+    
+    try:
+        cursor.execute(query)
+        row_data = cursor.fetchall()
+
+        if row_data:
+        # Get column names
+            column_names = [desc[0] for desc in cursor.description]
+
+            # Create an empty list to store dictionaries
+            data = []
+
+            # Loop through each row and create a dictionary
+            for row in row_data:
+                # Create a dictionary with column names as keys and row values
+                data_dict = dict(zip(column_names, row))
+                data.append(data_dict)
+            return data
+    
+    except mysql.connector.Error as e:
+        # Handle specific MySQL errors here
+        print(f"MySQL Error: {e}")
+        return None
+    except Exception as e:
+        # Handle other unexpected errors here
+        print(f"Unexpected Error: {e}")
+        return None
+    
+    
+    # cursor.execute(query)
+    # return cursor.fetchall()
 
 def parse_response(cursor: mysql.connector.cursor_cext.CMySQLCursor, result_to_parse: Tuple) -> Dict:
     """_summary_
@@ -145,6 +174,42 @@ def fetching_tenant_dict_from_db(cursor: mysql.connector.cursor_cext.CMySQLCurso
     tenant_query_result = fetch_one_query(cursor=cursor, query=GET_TENANT_CONFIGURATIONS_QUERY.format(f"'{account_query_result.get('accountTenantId')}'"))
    
     if tenant_query_result:    
-        return { "id": tenant_query_result.get("id"), "tenant_id": tenant_query_result.get("tenantId")}
+        return { 'id': tenant_query_result.get('id'), 'tenant_id': tenant_query_result.get('tenantId')}
     
     return {}
+
+def fetching_domains_by_vendor_id(cursor: mysql.connector.cursor_cext.CMySQLCursor, vendor_id: str) -> Dict[str,str]:
+    all_domains = fetch_all_query(cursor=cursor, query=GET_SSO_DOMAINS_BY_VENDOR.format(f"'{vendor_id}'"))
+    
+    if all_domains:
+        return {"all_domains": all_domains}
+    
+    return None
+
+def fetching_sso_config_id_by_domain_and_vendor_id(cursor: mysql.connector.cursor_cext.CMySQLCursor, vendor_id: str, domain: str) -> Dict[str,str]:
+    query = GET_SSO_DOMAINS_BY_VENDOR.format(f"'{vendor_id}'") + ' ' +  AND_DOMAIN.format(f"'{domain}'")
+    domain_dict = fetch_all_query(cursor=cursor, query=query)
+
+    if domain_dict:
+        return {"domain": domain_dict}
+    
+    return None
+
+def fetching_sso_configs_by_config_id(cursor: mysql.connector.cursor_cext.CMySQLCursor, config_id: str) -> Dict[str,str]:
+    query = GET_SSO_CONFIGS_BY_SSO_CONFIG_ID.format(f"'{config_id}'")
+    sso_configs = fetch_all_query(cursor=cursor, query=query)
+
+    if sso_configs:
+        return {"sso_configs": sso_configs}
+    
+    return None
+
+def fetching_saml_groups_by_config_id(cursor: mysql.connector.cursor_cext.CMySQLCursor, config_id: str) -> Dict[str,str]:
+    query = GET_SAML_GROUPS_BY_SSO_CONFIG_ID.format(f"'{config_id}'")
+    print(query)
+    saml_groups = fetch_all_query(cursor=cursor, query=query)
+    print(saml_groups)
+    if saml_groups:
+        return {"saml_groups": saml_groups}
+    
+    return None

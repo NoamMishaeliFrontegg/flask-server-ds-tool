@@ -1,5 +1,8 @@
 BASE_PATH = 'https://api.frontegg.com'
 SUBSCRIPTION_CONFIGURATION = '/subscriptions/resources/billing/tenant-configurations/v1/'
+ZENDESK_TICKET_URL = 'https://frontegg-help.zendesk.com/api/v2/tickets/'
+ZENDESK_USERS_FROM_TICKET_URL = 'https://frontegg-help.zendesk.com/api/v2/tickets/{}?include=users'
+
 
 GET_VENDOR_BY_ID_QUERY = 'SELECT * FROM frontegg_vendors.vendors v WHERE v.id ={}'
 GET_ENV_IDS_BY_ACCOUNT_ID_QUERY = 'SELECT * FROM frontegg_vendors.vendors v  WHERE v.accountId={}'
@@ -19,3 +22,21 @@ AND_DOMAIN = 'AND sd.domain = {}'
 
 REGIONS = ['EU', 'US']
 # REGIONS = ['EU', 'US', 'CA', 'AU']
+
+"""
+1. get domains by vendor:  -----   DONE
+GET_SSO_DOMAINS_BY_VENDOR
+
+2. get sso config IDs by vendor and domain:  -----   DONE
+GET_SSO_DOMAINS_BY_VENDOR + AND_DOMAIN
+
+3. get sso config by config ID:  -----   DONE
+GET_SSO_CONFIGS_BY_SSO_CONFIG_ID
+
+4. SAML GROUPS by config ID:   -----   DONE
+GET_SAML_GROUPS_BY_SSO_CONFIG_ID
+
+5. get sso conf for all domains from vendor id
+6. get saml groups for all domains from vendor id
+7. get 6 and 7 from email
+"""
