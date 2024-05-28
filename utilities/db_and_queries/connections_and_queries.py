@@ -1,12 +1,12 @@
-from typing import Any, Callable, Dict, Tuple, List, Union
+from typing import Any, Callable, Dict, Optional, Tuple, List, Union
 import mysql.connector
-from .consts import *
+from consts import *
 import os
 from dotenv import load_dotenv
 
 load_dotenv('.env')
 
-def connect_to_db(user_name: str, host: str, passwd: str) -> mysql.connector.connection_cext.CMySQLConnection:
+async def connect_to_db(user_name: str, host: str, passwd: str) -> mysql.connector.connection_cext.CMySQLConnection:
     user_name = os.getenv(user_name)
     host = os.getenv(host)
     passwd = os.getenv(passwd)
@@ -17,6 +17,21 @@ def connect_to_db(user_name: str, host: str, passwd: str) -> mysql.connector.con
                                 passwd = passwd)
 
     return db
+
+async def check_in_all_dbs(func: Callable[..., Tuple[Any, Any]], db_type: Optional[str] = 'GENERAL', *args: Any, **kwargs: Any) -> Tuple[Dict,str]:
+    for region in REGIONS:
+        db = await connect_to_db(user_name='USER_NAME', host=f'HOST_{db_type}_{region}', passwd=f'PASSWD_{db_type}_{region}')
+        cursor = db.cursor()     
+        data = func(cursor=cursor,*args, **kwargs)
+        
+        if data:
+            db.close()
+            return data, region
+        
+        else:
+            db.close()
+            
+    return None
 
 def fetch_one_query(cursor: mysql.connector.cursor.MySQLCursor, query: str) -> Tuple:
     """Execute a query and fetch one result row.
@@ -119,21 +134,6 @@ def parse_response(cursor: mysql.connector.cursor_cext.CMySQLCursor, result_to_p
         return result
     return {}
 
-def check_in_all_dbs(func: Callable[..., Tuple[Any, Any]], *args: Any, **kwargs: Any) -> Tuple[Dict,str]:
-    for region in REGIONS:
-        db = connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
-        cursor = db.cursor()     
-        data = func(cursor=cursor,*args, **kwargs)
-        
-        if data:
-            db.close()
-            return data, region
-        
-        else:
-            db.close()
-            
-    return None
-
 def find_user_role(cursor: mysql.connector.cursor_cext.CMySQLCursor, user_id: str, tenant_id: str) -> Union[str, List[str]]:
     # get user's tenant id with user_id and tenant_id from 'users_tenants' table
     user_tenant_id = fetch_one_query(cursor=cursor, query=GET_USER_TENANT_BY_USER_ID_AND_TEN_ID_QUERY.format(f"'{user_id}'", f"'{tenant_id}'"))
@@ -213,3 +213,35 @@ def fetching_saml_groups_by_config_id(cursor: mysql.connector.cursor_cext.CMySQL
         return {"saml_groups": saml_groups}
     
     return None
+
+def fetching_account_tenant_id_by_email(cursor: mysql.connector.cursor_cext.CMySQLCursor, email: str) -> Dict[str,str]:
+    query = GET_ACCOUNT_TENANT_ID_BY_EMAIL_AND_FE_PROD_ID.format(f"'{email}'", f"'{PROD_VENDOR_ID}'")
+    
+    account_tenant_response = fetch_one_query(cursor=cursor, query=query)
+    
+    if account_tenant_response:
+        return {"account_tenant_response": account_tenant_response}
+    
+    return None
+
+def fetching_account_id_by_account_tenant_id(cursor: mysql.connector.cursor_cext.CMySQLCursor, account_tenant_id: str) -> Dict[str,str]:
+    query = GET_ACCOUNT_ID_BY_ACCOUNT_TENANT_ID.format(f"'{account_tenant_id}'")
+
+    account_tenant_response = fetch_one_query(cursor=cursor, query=query)
+
+    if account_tenant_response:
+        return {"account_tenant_response": account_tenant_response}
+    
+    return None
+
+def fetching_vendor_id_by_account_id(cursor: mysql.connector.cursor_cext.CMySQLCursor, account_id: str) -> Dict[str,str]:
+    query = GET_VENDOR_ID_BY_ACCOUNT_ID.format(f"'{account_id}'")
+
+    account_response = fetch_one_query(cursor=cursor, query=query)
+
+    if account_response:
+        return {"account_response": account_response}
+    
+    return None
+
+# TODO: needs to refactor to mysql pool both fetch all and fetch one functions

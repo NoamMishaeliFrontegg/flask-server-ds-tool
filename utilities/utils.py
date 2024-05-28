@@ -1,8 +1,9 @@
 import re
 from typing import Tuple
-from .connections_and_queries import *
+
+from .db_and_queries.connections_and_queries import *
 from dotenv import load_dotenv
-from .consts import *
+from consts import *
 import requests
 import os
 import uuid
@@ -131,14 +132,33 @@ def is_valid_email(email: str) -> bool:
         bool: True if the email address is valid, False otherwise.
     """
     # Regular expression pattern for email validation
-    email_regex = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-
+    email_regex = "^([^\s@]+@[^\s@]+\.[^\s@]+)$"
+    
     # Check if the email matches the pattern
     if re.match(email_regex, email):
         return True
     else:
         return False
     
+def is_valid_ticket_id(ticket_id: str) -> bool:
+    """
+    Validate the given ticket id using regular expressions.
+
+    Args:
+        ticket (str): The ticket id to be validated.
+
+    Returns:
+        bool: True if the ticket id is valid, False otherwise.
+    """
+    # Regular expression pattern for email validation
+    ticket_regex = r'^\d{4}$'
+
+    # Check if the email matches the pattern
+    if re.match(ticket_regex, ticket_id):
+        return True
+    else:
+        return False
+
 def is_domain_in_email(email: str, domain: str) -> bool:
     """
     Checks if the given domain is present in the email address.
@@ -158,3 +178,4 @@ def is_domain_in_email(email: str, domain: str) -> bool:
         return True
     else:
         return False
+    

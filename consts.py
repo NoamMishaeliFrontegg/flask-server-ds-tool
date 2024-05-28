@@ -18,10 +18,17 @@ GET_SSO_DOMAINS_BY_VENDOR = 'SELECT * FROM frontegg_team_management.sso_domains 
 GET_SSO_CONFIGS_BY_SSO_CONFIG_ID = 'SELECT * FROM frontegg_team_management.sso_configs sc WHERE sc.id={}'
 GET_SAML_GROUPS_BY_SSO_CONFIG_ID = 'SELECT * FROM frontegg_team_management.saml_groups sg WHERE sg.samlConfigId={}'
 
+GET_ACCOUNT_TENANT_ID_BY_EMAIL_AND_FE_PROD_ID = 'SELECT * FROM frontegg_identity.users u WHERE u.email={} AND u.vendorId={}'
+GET_ACCOUNT_ID_BY_ACCOUNT_TENANT_ID = 'SELECT * FROM frontegg_vendors.accounts a WHERE a.accountTenantId={}'
+GET_VENDOR_ID_BY_ACCOUNT_ID = 'SELECT * FROM frontegg_vendors.vendors v  WHERE v.accountId={}'
+
 AND_DOMAIN = 'AND sd.domain = {}'
 
 REGIONS = ['EU', 'US']
 # REGIONS = ['EU', 'US', 'CA', 'AU']
+
+PROD_VENDOR_ID = '86744d15-3970-4ca1-82e9-2cd281728624'
+
 
 """
 1. get domains by vendor:  -----   DONE
