@@ -40,7 +40,6 @@ async def get_account_id_from_vendor_id(vendor_id: str, region: Optional[str] = 
     
     return None
 
-
 async def remove_trial_process(vendor_id: str, region: Optional[str] = None) -> Optional[Dict]:
     
     if not region:
@@ -67,8 +66,8 @@ async def find_user_roles_in_db(user_id: str, tenant_id: str) -> Optional[Dict]:
     
     db_pool  = await connect_to_db(user_name='USER_NAME', host='HOST_IDENTITY_EU', passwd='PASSWD_IDENTITY_EU')
       
-    roles = find_user_role(db_pool=db_pool, user_id=user_id, tenant_id=tenant_id)
-    
+    # roles = find_user_role(db_pool=db_pool, user_id=user_id, tenant_id=tenant_id)
+    roles = {}
     db_pool.close()
     return roles
 
@@ -258,7 +257,6 @@ async def get_all_data_by_vendor_id(vendor_id: str) -> Optional[Dict]:
     res_json['vendor_dict'] = vendor_dict
 
     vendor_domains = await get_domains_by_vendor_id(vendor_id=vendor_id, region=region)
-    print("\n\nEEEEEEEEEEeeeeeeeee::::::: \n\n",vendor_domains, "\n\nEEEEEEEEEEeeeeeeeee::::::: \n\n")
     for domain in vendor_domains['domain']:
         sso_config_id_dict = await get_sso_config_id_by_domain_and_vendor_id(vendor_id=vendor_id, domain=domain, region=region)
         

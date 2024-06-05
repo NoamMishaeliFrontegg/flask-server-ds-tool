@@ -210,7 +210,7 @@ async def fetching_saml_groups_by_config_id(db_pool: aiomysql.pool.Pool, config_
     return None
 
 async def fetching_account_tenant_id_by_email(db_pool: aiomysql.pool.Pool, email: str) -> Dict[str,str]:
-    query = GET_ACCOUNT_TENANT_ID_BY_EMAIL_AND_FE_PROD_ID.format(f"'{email}'", f"'{PROD_VENDOR_ID}'")
+    query = GET_ACCOUNT_TENANT_ID_BY_EMAIL_AND_FE_PROD_ID.format(f"'{email}'", f"'{os.getenv('PROD_VENDOR_ID')}'")
     
     account_tenant_response = await fetch_one_query(db_pool=db_pool, query=query)
     
@@ -230,7 +230,7 @@ async def fetching_account_id_by_account_tenant_id(db_pool: aiomysql.pool.Pool, 
     return None
 
 async def fetching_vendor_id_by_account_id(db_pool: aiomysql.pool.Pool, account_id: str) -> Dict[str,str]:
-    query = GET_VENDOR_ID_BY_ACCOUNT_ID.format(f"'{account_id}'")
+    query = GET_ACCOUNT_BY_ID_QUERY.format(f"'{account_id}'")
 
     account_response = await fetch_one_query(db_pool=db_pool, query=query)
 
