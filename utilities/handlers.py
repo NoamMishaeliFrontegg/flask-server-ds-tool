@@ -3,7 +3,7 @@ from enum import Enum
 
 from flask import jsonify
 
-from .zendesk_api.zendesk_requests import get_auth_header_from_zendesk_api, get_ticket_emails_from_zd_dict, get_users_from_zd_ticket
+# from .zendesk_api.zendesk_requests import get_auth_header_from_zendesk_api, get_ticket_emails_from_zd_dict, get_users_from_zd_ticket
 
 from consts import *
 from .db_and_queries.connections_and_queries import *
@@ -13,8 +13,82 @@ from .utils import *
 class QueryEnum(Enum):
     tenant = GET_ACCOUNT_BY_ID_QUERY
     vendor = GET_VENDOR_BY_ID_QUERY
-    # user = GET_USER_BY_ID_QUERY
 
+async def get_account_tenant_id_by_customer_email(email: str, region: Optional[str] = None) -> Optional[Dict]:
+    if not region:
+        data = await check_in_all_dbs(func=fetching_account_tenant_id_by_email, db_type='IDENTITY', email=email)
+    
+    else:
+        db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_IDENTITY_{region}', passwd=f'PASSWD_IDENTITY_{region}')
+        data = await fetching_account_tenant_id_by_email(db_pool=db_pool,  email=email)
+        db_pool.close()     
+        await db_pool.wait_closed()
+
+        
+    if data:        
+        return data
+    
+    return None
+
+async def get_tenant_id_by_account_tenant_id(account_tenant_id: str, region: Optional[str] = None) -> Optional[Dict]:
+    if not region:
+        data = await check_in_all_dbs(func=fetching_account_id_by_account_tenant_id, account_tenant_id=account_tenant_id)
+    
+    else:
+        db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
+
+        data = await fetching_account_id_by_account_tenant_id(db_pool=db_pool,  account_tenant_id=account_tenant_id)
+        db_pool.close()     
+        
+    if data:       
+        return data
+    
+    return None
+
+async def get_vendor_id_by_account_id(account_id: str, region: Optional[str] = None) -> Optional[Dict]:
+    if not region:
+        data = await check_in_all_dbs(func=fetching_vendor_id_by_account_id, account_id=account_id)
+    
+    else:
+        db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
+
+        data = await fetching_vendor_id_by_account_id(db_pool=db_pool,  account_id=account_id)
+        db_pool.close()     
+        
+    if data:        
+        return data
+    
+    return None
+
+async def get_account_by_tenant_id(tenant_id: str, region: Optional[str] = None) -> Optional[Dict]:
+    if not region:
+        account_dict = await check_in_all_dbs(func=fetch_one_query, query=GET_ACCOUNT_BY_ID_QUERY.format(f"'{tenant_id}'"), db_type='GENERAL')
+        region = account_dict.get('region')
+        
+    else:
+        db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
+        account_dict = await fetch_one_query(db_pool=db_pool,  query=GET_ACCOUNT_BY_ID_QUERY.format(f"'{tenant_id}'"))
+
+        db_pool.close()     
+        await db_pool.wait_closed()
+    
+    return account_dict
+
+async def get_vendor_by_id(vendor_id: str, region: Optional[str] = None) -> Optional[Dict]:
+    if not region:
+        vendor_dict = await check_in_all_dbs(func=fetch_one_query, query=GET_VENDOR_BY_ID_QUERY.format(f"'{vendor_id}'"), db_type='GENERAL')
+        region = vendor_dict.get('region')
+
+    else:         
+        db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
+        vendor_dict = await fetch_one_query(db_pool=db_pool,  query=GET_VENDOR_BY_ID_QUERY.format(f"'{vendor_id}'"))
+        db_pool.close()     
+        await db_pool.wait_closed()
+    
+    return vendor_dict
+    
+
+"""   
 async def check_customer_region(id_type: str, id: str) -> Optional[Dict]:    
     members = QueryEnum.__members__
     
@@ -77,8 +151,7 @@ async def get_vendors_ids_by_account_id(account_id: str, region: str) -> Optiona
      
     
     vendor_query_result = await fetch_all_query(db_pool=db_pool, query=GET_VENDORS_IDS_BY_ACCOUNT_ID_QUERY.format(f"'{account_id}'"))
-    if vendor_query_result:
-        # vendor_dict_response = parse_response(db_pool=db_pool, result_to_parse=vendor_query_result)        
+    if vendor_query_result:     
         db_pool.close()     
         
         return vendor_query_result.get('id')
@@ -160,50 +233,6 @@ async def get_saml_groups_by_config_id(config_id: str, region: Optional[str] = N
     
     return None
 
-async def get_account_tenant_id_from_customer_email(email: str, region: Optional[str] = None) -> Optional[Dict]:
-    if not region:
-        data = await check_in_all_dbs(func=fetching_account_tenant_id_by_email, db_type='IDENTITY', email=email)
-    
-    else:
-        db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_IDENTITY_{region}', passwd=f'PASSWD_IDENTITY_{region}')
-        data = await fetching_account_tenant_id_by_email(db_pool=db_pool,  email=email)
-        db_pool.close()     
-        
-    if data:        
-        return data
-    
-    return None
-
-async def get_tenant_id_by_account_tenant_id(account_tenant_id: str, region: Optional[str] = None) -> Optional[Dict]:
-    if not region:
-        data = await check_in_all_dbs(func=fetching_account_id_by_account_tenant_id, account_tenant_id=account_tenant_id)
-    
-    else:
-        db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
-
-        data = await fetching_account_id_by_account_tenant_id(db_pool=db_pool,  account_tenant_id=account_tenant_id)
-        db_pool.close()     
-        
-    if data:       
-        return data
-    
-    return None
-
-async def get_vendor_id_by_tenant_id(account_id: str, region: Optional[str] = None) -> Optional[Dict]:
-    if not region:
-        data = await check_in_all_dbs(func=fetching_vendor_id_by_account_id, account_id=account_id)
-    
-    else:
-        db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
-
-        data = await fetching_vendor_id_by_account_id(db_pool=db_pool,  account_id=account_id)
-        db_pool.close()     
-        
-    if data:        
-        return data
-    
-    return None
-
 async def manage_vendor_id_from_email(email: str, region: Optional[str] = None) -> Optional[Dict]:
     data = await get_account_tenant_id_from_customer_email(email=email, region=region)
 
@@ -218,16 +247,17 @@ async def manage_vendor_id_from_email(email: str, region: Optional[str] = None) 
         return None   
     
     account_id = account_tenant_response.get('id')
-    account_response = await get_vendor_id_by_tenant_id(account_id=account_id, region=region)
+    account_response = await get_vendor_id_by_account_id(account_id=account_id, region=region)
 
     if not account_response:
         return None 
     
     if account_response.get('id'):
-        return account_response.get('id')
+        vendor_id = account_response.get('id')
+        return vendor_id
     
     return None 
-    
+   
 async def manage_vendor_id_from_zendesk_ticket(ticket_number: str, region: Optional[str] = None) -> Optional[Dict]:
     # zendesk logic
     auth_header = await get_auth_header_from_zendesk_api(email='ZENDESK_EMAIL_TOKEN', api_token='ZENDESK_API_TOKEN')
@@ -242,7 +272,7 @@ async def manage_vendor_id_from_zendesk_ticket(ticket_number: str, region: Optio
                 return vendor_id
     
     return {}   
-
+        
 async def get_all_data_by_vendor_id(vendor_id: str) -> Optional[Dict]:
     res_json = {}
     
@@ -268,13 +298,8 @@ async def get_all_data_by_vendor_id(vendor_id: str) -> Optional[Dict]:
 
             res_json['sso_configs'] = all_configs
 
-    return res_json
-    
-    return None
-    
-if __name__ == "__main__":
-  
-    db = connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_US', passwd=f'PASSWD_GENERAL_US')
-     
-    
-    
+    return res_json     
+
+
+
+"""

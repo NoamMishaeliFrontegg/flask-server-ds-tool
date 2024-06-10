@@ -16,12 +16,19 @@ GET_USER_TENANT_BY_USER_ID_AND_TEN_ID_QUERY = 'SELECT x.* from frontegg_identity
 GET_ROLES_BY_USER_TEN_ID_QUERY = 'SELECT x.* FROM frontegg_identity.users_tenants_roles x WHERE x.userTenantId={}'
 GET_ROLE_NAME_BY_ID_QUERY = 'SELECT x.* FROM frontegg_identity.roles x WHERE x.id={}'
 
+GET_SSO_DOMAINS_BY_TENANT = 'SELECT * FROM frontegg_team_management.sso_domains sd WHERE sd.tenantId={}'
 GET_SSO_DOMAINS_BY_VENDOR = 'SELECT * FROM frontegg_team_management.sso_domains sd WHERE sd.vendorId={}'
 GET_SSO_CONFIGS_BY_SSO_CONFIG_ID = 'SELECT * FROM frontegg_team_management.sso_configs sc WHERE sc.id={}'
 GET_SAML_GROUPS_BY_SSO_CONFIG_ID = 'SELECT * FROM frontegg_team_management.saml_groups sg WHERE sg.samlConfigId={}'
 
+# GET_ACCOUNT_TENANT_ID_BY_EMAIL_AND_FE_PROD_ID = 'SELECT * FROM frontegg_identity.users u WHERE u.email={}'
 GET_ACCOUNT_TENANT_ID_BY_EMAIL_AND_FE_PROD_ID = 'SELECT * FROM frontegg_identity.users u WHERE u.email={} AND u.vendorId={}'
+
 GET_ACCOUNT_ID_BY_ACCOUNT_TENANT_ID = 'SELECT * FROM frontegg_vendors.accounts a WHERE a.accountTenantId={}'
+
+GET_ACCOUNT_DETAILS_BY_ID ='SELECT * FROM frontegg_vendors.accounts a WHERE a.id={}'
+GET_ALL_VENDORS_BY_ACCOUNT_ID = 'SELECT * FROM frontegg_vendors.vendors v WHERE v.accountId={}'
+GET_ALL_TENANTS_BY_VENDOR_ID = 'SELECT x.* FROM frontegg_backoffice.accounts x WHERE x.vendorId ={}'
 
 AND_DOMAIN = 'AND sd.domain = {}'
 
