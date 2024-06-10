@@ -40,7 +40,7 @@ def authenticate_as_vendor(production_client_id: str, production_client_secret: 
     Returns:
         The function returns the JSON response from the authentication API.
     """
-    url = "https://api.frontegg.com/auth/vendor/"
+    url = BASE_PATH + FRONTEGG_AUTH_AS_VENDOR
     headers = {
         "accept": "application/json",
         "content-type": "application/json"
@@ -104,7 +104,7 @@ def request_white_lable(is_enabled: bool, vendor_id: str, token: str) -> Tuple[s
     Returns:
         Tuple[str, str]: A tuple containing the HTTP status code (first element) and the response text (second element) from the API.
     """
-    url = "https://api.frontegg.com/vendors/whitelabel-mode"
+    url = BASE_PATH + FRONTEGG_WHITE_LABEL
     
     headers = {
         "accept": "application/json",
@@ -179,3 +179,26 @@ async def is_domain_in_email(email: str, domain: str) -> bool:
     else:
         return False
     
+def object_to_dict(obj, exclude_keys=None) -> Dict[str,str]:
+    """
+    Recursively converts an object and its nested objects into a dictionary.
+
+    Args:
+        obj (object): The object to be converted to a dictionary.
+        exclude_keys (list or None): A list of keys to exclude from the dictionary.
+
+    Returns:
+        dict: A dictionary representing the object and its nested objects.
+    """
+    if exclude_keys is None:
+        exclude_keys = []
+
+    if isinstance(obj, dict):
+        return {k: object_to_dict(v, exclude_keys) for k, v in obj.items() if k not in exclude_keys}
+    elif isinstance(obj, (list, tuple, set)):
+        return [object_to_dict(item, exclude_keys) for item in obj]
+    elif hasattr(obj, "__dict__"):
+        obj_dict = {k: object_to_dict(v, exclude_keys) for k, v in obj.__dict__.items() if k not in exclude_keys}
+        return obj_dict
+    else:
+        return obj
