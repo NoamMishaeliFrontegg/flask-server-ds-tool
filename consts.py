@@ -35,9 +35,7 @@ AND_DOMAIN = 'AND sd.domain = {}'
 REGIONS = ['EU', 'US']
 # REGIONS = ['EU', 'US', 'CA', 'AU']
 
-
 # TODO:
 # 1. edge case :: in search in all regions when an account is under few regions (for example - Talon) 
-# 2. finish models, implement it with all requests and FE
 # 3. add creds for CA and AU
 # 4. add a logger
