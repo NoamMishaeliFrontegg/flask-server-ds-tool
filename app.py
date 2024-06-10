@@ -1,5 +1,6 @@
 import os
 import sys
+import asyncio
 
 # Get the project root directory
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -8,9 +9,11 @@ PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(PROJECT_ROOT)
 
 from flask import Flask, request, jsonify
+from utilities.new_flows import *
+
 import json
 from flask_cors import CORS
-from utilities.handlers import check_customer_region, find_user_roles_in_db, get_saml_groups_by_config_id, get_sso_configs_by_config_id, get_domains_by_vendor_id, get_sso_config_id_by_domain_and_vendor_id, manage_vendor_id_from_email, manage_vendor_id_from_zendesk_ticket, remove_trial_process, get_account_id_by_vendor_id, get_environments_ids_by_account_id
+# from utilities.handlers import check_customer_region, find_user_roles_in_db, get_all_data_by_vendor_id, get_saml_groups_by_config_id, get_sso_configs_by_config_id, get_domains_by_vendor_id, get_sso_config_id_by_domain_and_vendor_id, manage_vendor_id_from_email, manage_vendor_id_from_zendesk_ticket, remove_trial_process, get_account_id_by_vendor_id, get_vendors_ids_by_account_id
 from utilities.utils import authenticate_as_vendor, get_production_env_variables, is_valid_email, is_valid_ticket_id, request_white_lable, validate_uuid
 
 app = Flask(__name__)
@@ -31,9 +34,7 @@ async def find_customer_region():
         is_valid = validate_uuid(uuid_string=stripped_query_id)
 
         if is_valid and (len(selected_option) > 1):
-            print(selected_option, "\n",query_id,"\n",is_valid)
             customer_region = await check_customer_region(id_type=selected_option, id=stripped_query_id)
-            print(customer_region)
             if customer_region:
                 return jsonify(customer_region)
             
@@ -108,7 +109,7 @@ async def white_label():
             account_id = await get_account_id_by_vendor_id(vendor_id=stripped_vendor_id, region='EU')
             
             if account_id:
-                env_ids = await get_environments_ids_by_account_id(account_id=account_id, region='EU')            
+                env_ids = await get_vendors_ids_by_account_id(account_id=account_id, region='EU')            
 
             if env_ids:
                 for id in env_ids:    
@@ -199,18 +200,18 @@ async def sso_configs_by_domain_and_vendor_id():
         stripped_domain = str(domain).strip('\'"')
         stripped_vendor_id = str(vendor_id).strip('\'"')
         is_valid = validate_uuid(uuid_string=stripped_vendor_id)
-        print(stripped_vendor_id, stripped_domain)
+
         if not is_valid:
             return jsonify({'Error': 'Invalid ID'})
                 
         sso_config_id_dict = await get_sso_config_id_by_domain_and_vendor_id(vendor_id=stripped_vendor_id, domain=stripped_domain, region=region)
-        
+
         if sso_config_id_dict:    
-            all_configs = []               
-            config_ids = sso_config_id_dict.get("domain")
-            for row in config_ids:
-                sso_configs_dict = await get_sso_configs_by_config_id(config_id=row.get("ssoConfigId"), region=region)
+            all_configs = []
+            for configId in sso_config_id_dict.get('ssoConfigId'):
+                sso_configs_dict = await get_sso_configs_by_config_id(config_id=configId, region=region)
                 all_configs.append(sso_configs_dict)
+
             return all_configs
             
     else:
@@ -230,7 +231,6 @@ async def sso_configs_by_config_id():
             return jsonify({'Error': 'Invalid ID'})
         
         sso_configs_dict = await get_sso_configs_by_config_id(config_id=stripped_config_id, region=region)
-        print(sso_configs_dict)
         
         if sso_configs_dict:                    
             return jsonify(sso_configs_dict)        
@@ -253,7 +253,7 @@ async def saml_groups_by_config_id():
             return jsonify({'Error': 'Invalid ID'})
         
         saml_groups_dict = await get_saml_groups_by_config_id(config_id=stripped_config_id, region=region)
-        print(saml_groups_dict)
+
         if saml_groups_dict:                    
             return jsonify(saml_groups_dict)        
     
@@ -275,7 +275,10 @@ async def vendor_id_by_email():
             return jsonify({'Error': 'Invalid email address'})
         
         vendor_id = await manage_vendor_id_from_email(email=email_address, region=region)
-        return jsonify(vendor_id)
+        
+        asd = await get_all_data_by_vendor_id(vendor_id=vendor_id)
+        print("\nASDASDASDASD\n\n", asd, "\n\n")
+        return jsonify(asd)
     
     else:
         return jsonify({'Error': 'Method not allowed'})
@@ -288,23 +291,72 @@ async def vendor_id_by_ticket_id():
         
         ticket_number = data.get('ticketNumber', '')
         region = data.get('region', None)
-        print(ticket_number)
+
         is_valid = is_valid_ticket_id(ticket_id=ticket_number)
 
         if not is_valid:
             return jsonify({'Error': 'Invalid ticket id'})
         
         vendor_id = await manage_vendor_id_from_zendesk_ticket(ticket_number=ticket_number, region=region)
-        print(vendor_id)
-        return jsonify(vendor_id)
+        asd = await get_all_data_by_vendor_id(vendor_id=vendor_id)
+
+        return jsonify(asd)
+    
+    else:
+        return jsonify({'Error': 'Method not allowed'})
+
+@app.route('/get_all_data_by_vendor_id', methods=['POST'])
+async def get_data_by_vendor_id():
+    # needs to check with guy why i do not have an access for users table in our DB
+    if request.method == 'POST':
+        data = json.loads(request.data)
+        
+        vendor_id = data.get('vendorId', '')
+        region = data.get('region', None)
+
+        is_valid = validate_uuid(uuid_string=vendor_id)
+
+        if not is_valid:
+            return jsonify({'Error': 'Invalid vendor id'})
+        
+        data = await get_all_account_data_by_vendor_id(vendor_id=vendor_id, region=region)
+        print(data)
+        return data
     
     else:
         return jsonify({'Error': 'Method not allowed'})
 
 
-if __name__ == '__main__':
-    asd = manage_vendor_id_from_zendesk_ticket(ticket_number='4079')
-    print(asd)
 
-    # did not work with: eran@saola.ai 
-    # should check weather email validation is not correct ot any other way 
+if __name__ == '__main__':
+    
+    loop = asyncio.get_event_loop()
+
+    try:
+        print("######### Without Region ############\n")
+        # account = loop.run_until_complete(get_all_account_data_by_vendor_id("764e295e-7139-4a54-b871-b937eb8927d5"))
+        # print("\naccount by vendor\n\n", account)
+        # account = loop.run_until_complete(get_all_account_data_by_tenant_id("854df473-17a8-42f1-bdfa-d88d6c1bf1fc"))
+        # print("\naccount by tenant\n\n", account)
+        # account = loop.run_until_complete(get_all_account_data_by_user_email("noam.mishaeli@frontegg.com"))
+        # print("\naccount by email\n\n", account)
+        # account = loop.run_until_complete(get_all_account_data_by_zendesk_ticket_number("4346"))
+        # print("\naccount by email\n\n", account)
+        
+        
+        # print("######### Region ############\n")
+        
+        # account = loop.run_until_complete(get_all_account_data_by_vendor_id("764e295e-7139-4a54-b871-b937eb8927d5", region='EU'))
+        # print("\naccount by vendor\n\n", account)
+        # account = loop.run_until_complete(get_all_account_data_by_tenant_id("854df473-17a8-42f1-bdfa-d88d6c1bf1fc", region='EU'))
+        # print("\naccount by tenant\n\n", account)
+        # account = loop.run_until_complete(get_all_account_data_by_user_email("noam.mishaeli@frontegg.com", region='EU'))
+        # print("\naccount by email\n\n", account)
+        
+        
+        # should implement by ticket
+        # implement validation for any id returned - make sure it is not a constant in our db and uuid instead
+    finally:
+        loop.close()
+        
+    

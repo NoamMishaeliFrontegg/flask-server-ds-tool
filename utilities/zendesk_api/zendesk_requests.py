@@ -31,7 +31,7 @@ async def get_users_from_zd_ticket(auth_header: str, ticket_number: str) -> Dict
     response = requests.get(url, headers=headers)
     return response.json()
 
-def get_ticket_emails_from_zd_dict(res_dict: Dict[str,str]) -> Dict[str,str]:
+async def get_ticket_emails_from_zd_dict(res_dict: Dict[str,str]) -> Dict[str,str]:
     emails_dict = {
         'Agent': [],
         'Customer': []
@@ -39,14 +39,20 @@ def get_ticket_emails_from_zd_dict(res_dict: Dict[str,str]) -> Dict[str,str]:
 
     for user in res_dict.get('users'):
         
-        if is_valid_email(email=user.get('email')):
-            
-            if is_domain_in_email(email=user.get('email'), domain='frontegg.com'):
-                emails_dict['Agent'].append(user.get('email'))    
+        user_email = user.get('email')
+        
+        is_valid = await is_valid_email(email=user_email)
+        
+        if is_valid:
+            is_frontegg = await is_domain_in_email(email=user_email, domain='frontegg.com')
+            is_support_frontegg = await is_domain_in_email(email=user_email, domain='support.frontegg.com')
+
+            if is_frontegg or is_support_frontegg:
+                emails_dict['Agent'].append(user_email)    
             else:
-                emails_dict['Customer'].append(user.get('email'))
+                emails_dict['Customer'].append(user_email)
                 
         else:
-            print(f'Email is not valid {user.get("email", None)}')
+            print(f'Email is not valid {user_email}')
 
     return emails_dict

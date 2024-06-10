@@ -121,7 +121,7 @@ def request_white_lable(is_enabled: bool, vendor_id: str, token: str) -> Tuple[s
     
     return {"status_code": response.status_code, "text": response.text}
 
-def is_valid_email(email: str) -> bool:
+async def is_valid_email(email: str) -> bool:
     """
     Validate the given email address using regular expressions.
 
@@ -159,7 +159,7 @@ def is_valid_ticket_id(ticket_id: str) -> bool:
     else:
         return False
 
-def is_domain_in_email(email: str, domain: str) -> bool:
+async def is_domain_in_email(email: str, domain: str) -> bool:
     """
     Checks if the given domain is present in the email address.
 
