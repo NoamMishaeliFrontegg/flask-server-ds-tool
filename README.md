@@ -19,7 +19,7 @@ Or
 $ nano .env
 ```
 
-Add the following key-value pairs with your credentials to the .env file 
+Add the following key-value pairs with your apono credentials to the .env file 
 ```bash
 USER_NAME = ''
 
