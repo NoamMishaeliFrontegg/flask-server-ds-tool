@@ -36,6 +36,10 @@ async def get_all_account_data_by_zendesk_ticket_number(ticket_number: str) -> O
     """
     auth_header = await get_auth_header_from_zendesk_api(email='ZENDESK_EMAIL_TOKEN', api_token='ZENDESK_API_TOKEN')
     res_dict = await get_users_from_zd_ticket(auth_header=auth_header, ticket_number=ticket_number)
+
+    if res_dict.get('error'):
+        return {'error': res_dict.get('error')}
+    
     emails = await get_ticket_emails_from_zd_dict(res_dict=res_dict)
     
     if emails['Customer']:
@@ -45,7 +49,7 @@ async def get_all_account_data_by_zendesk_ticket_number(ticket_number: str) -> O
             if account:
                 return account
     
-    return {}   
+    return {'error': 'ticket was not found'}   
 
 async def get_all_account_data_by_user_email(user_email: str, region: Optional[str] = None) -> Dict[str,str]:    
     """
@@ -67,7 +71,7 @@ async def get_all_account_data_by_user_email(user_email: str, region: Optional[s
     user_dict = await _fetch_account_tenant_id_by_customer_email_from_db(email=user_email, region=region)
 
     if not user_dict:
-        return None
+        return {'error': 'email is not valid or cannot be found'}
 
     # get account Id by accountTenantId:
     account_tenant_id = user_dict.get('tenantId')
@@ -100,9 +104,9 @@ async def get_all_account_data_by_tenant_id(tenant_id: str,  region: Optional[st
         Dict[str, str]: A dictionary containing the account data, or an error message if no account is found.
     """
     account_dict = await _fetch_account_by_tenant_id_from_db(tenant_id=tenant_id, region=region)
-    
+        
     if not account_dict:
-        return {'Error': 'vendor was not found'} ,{} , None
+        return {'error': 'tenant was not found'}
     
     vendor_id = account_dict.get('vendorId')
     
@@ -133,12 +137,12 @@ async def get_all_account_data_by_vendor_id(vendor_id: str,  region: Optional[st
     prod_vendor_id = os.getenv("PROD_VENDOR_ID")
     
     if vendor_id == prod_vendor_id:
-        return jsonify({'Error': 'Nice try! are trying to f@#k my app?!\nDONT ENTER FRONTEGG\'S PROD ID'})
+        return jsonify({'error': 'Nice try! are trying to f@#k my app?!\nDONT ENTER FRONTEGG\'S PROD ID'})
     
     account_dict, account_main_data, db_pool = await _fetch_account_dict_by_vendor_id_from_db(vendor_id=vendor_id, region=region)
     
-    if account_dict.get('Error'):
-        return account_dict.get('Error')
+    if account_dict.get('error'):
+        return account_dict
     
     #  3. generate account model and assign id and name
     account = Account(
@@ -174,9 +178,9 @@ async def _fetch_account_dict_by_vendor_id_from_db(vendor_id: str,  region: Opti
             account main data dictionary, and a database connection pool (or None if no account is found).
     """  
     vendor_dict = await _fetch_vendor_by_id_from_db(vendor_id=vendor_id)
-    
+
     if not vendor_dict:
-        return {'Error': 'vendor was not found'} ,{} , None
+        return {'error': 'vendor was not found'} ,{} , None
     
     if vendor_dict.get('region') and not region:
         region = vendor_dict.get('region')
@@ -197,7 +201,7 @@ async def _fetch_account_dict_by_vendor_id_from_db(vendor_id: str,  region: Opti
         )          
           
     if not account_dict:            
-        return {'Error': 'account was not found'}, {}, None
+        return {'error': 'account was not found'}, {}, None
     
     return account_dict, {'account_id': vendor_dict.get('accountId'),'region': vendor_dict.get('region')}, db_pool
 
@@ -464,7 +468,7 @@ async def _fetch_account_by_tenant_id_from_db(tenant_id: str, region: Optional[s
     """
     if not region:
         account_dict = await check_in_all_dbs(func=fetch_one_query, query=GET_ACCOUNT_BY_ID_QUERY.format(f"'{tenant_id}'"), db_type='GENERAL')
-        region = account_dict.get('region')
+        # region = account_dict.get('region')
         
     else:
         db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
@@ -492,7 +496,6 @@ async def _fetch_vendor_by_id_from_db(vendor_id: str, region: Optional[str] = No
     """
     if not region:
         vendor_dict = await check_in_all_dbs(func=fetch_one_query, query=GET_VENDOR_BY_ID_QUERY.format(f"'{vendor_id}'"), db_type='GENERAL')
-        region = vendor_dict.get('region')
 
     else:         
         db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
@@ -503,7 +506,7 @@ async def _fetch_vendor_by_id_from_db(vendor_id: str, region: Optional[str] = No
     return vendor_dict
     
 
-
+# TODO: fix remove trial and white label to work with all regions 
 
 async def remove_trial_process(vendor_id: str, region: Optional[str] = None) -> Optional[Dict]:
     

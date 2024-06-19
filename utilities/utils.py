@@ -133,7 +133,6 @@ async def is_valid_email(email: str) -> bool:
     """
     # Regular expression pattern for email validation
     email_regex = "^([^\s@]+@[^\s@]+\.[^\s@]+)$"
-    
     # Check if the email matches the pattern
     if re.match(email_regex, email):
         return True

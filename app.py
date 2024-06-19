@@ -31,14 +31,14 @@ async def get_data_by_vendor_id():
         is_valid = validate_uuid(uuid_string=vendor_id)
 
         if not is_valid:
-            return jsonify({'Error': 'Invalid vendor id'})
+            return jsonify({'error': 'Invalid vendor id'})
         
         data = await get_all_account_data_by_vendor_id(vendor_id=vendor_id, region=region)
 
         return data
     
     else:
-        return jsonify({'Error': 'Method not allowed'})
+        return jsonify({'error': 'Method not allowed'})
 
 @app.route('/get_all_data_by_tenant_id', methods=['POST'])
 async def get_data_by_tenant_id():
@@ -51,34 +51,34 @@ async def get_data_by_tenant_id():
         is_valid = validate_uuid(uuid_string=tenant_id)
 
         if not is_valid:
-            return jsonify({'Error': 'Invalid tenant id'})
+            return jsonify({'error': 'Invalid tenant id'})
         
         data = await get_all_account_data_by_tenant_id(tenant_id=tenant_id, region=region)
 
         return data
     
     else:
-        return jsonify({'Error': 'Method not allowed'})
+        return jsonify({'error': 'Method not allowed'})
     
 @app.route('/get_all_data_by_email', methods=['POST'])
 async def get_data_by_email():
     if request.method == 'POST':
         data = json.loads(request.data)
         
-        email = data.get('email', '')
+        email = data.get('emailAddress', '')
         region = data.get('region', None)
 
-        is_valid = is_valid_email(email=email)
+        is_valid = await is_valid_email(email=email)
 
         if not is_valid:
-            return jsonify({'Error': 'Invalid email address'})
+            return jsonify({'error': 'Invalid email address'})
         
         data = await get_all_account_data_by_user_email(user_email=email, region=region)
 
         return data
     
     else:
-        return jsonify({'Error': 'Method not allowed'})
+        return jsonify({'error': 'Method not allowed'})
     
 @app.route('/get_all_data_by_ticket', methods=['POST'])
 async def get_data_by_ticket():
@@ -90,14 +90,14 @@ async def get_data_by_ticket():
         is_valid = is_valid_ticket_id(ticket_id=ticket)
 
         if not is_valid:
-            return jsonify({'Error': 'Invalid ticket number'})
+            return jsonify({'error': 'Invalid ticket number'})
         
         data = await get_all_account_data_by_zendesk_ticket_number(ticket_number=ticket)
 
         return data
     
     else:
-        return jsonify({'Error': 'Method not allowed'})
+        return jsonify({'error': 'Method not allowed'})
 
 @app.route('/remove_trial', methods=['GET', 'POST'])
 async def remove_trial():
@@ -118,10 +118,10 @@ async def remove_trial():
             if result:
                 return jsonify(result)
 
-        return jsonify({'Error': ['Invalid ID!', 'Wrong Region']})
+        return jsonify({'error': ['Invalid ID!', 'Wrong Region']})
     
     else:
-        return jsonify({'Error': 'Method not allowed'})
+        return jsonify({'error': 'Method not allowed'})
     
 @app.route('/white_label', methods=['POST'])
 async def white_label():
@@ -134,7 +134,7 @@ async def white_label():
         white_label_counter = 0
 
         if not is_valid:
-            return jsonify({'Error': 'Invalid ID'})
+            return jsonify({'error': 'Invalid ID'})
         
         if bool(is_enabled):
             production_client_id, production_secret = get_production_env_variables()
@@ -144,10 +144,10 @@ async def white_label():
                 production_client_secret=production_secret
                 )
         
-            account_id = await get_account_id_by_vendor_id(vendor_id=stripped_vendor_id, region='EU')
+            account_id = await get_account_id_by_vendor_id(vendor_id=stripped_vendor_id, region='US')
             
             if account_id:
-                env_ids = await get_vendors_ids_by_account_id(account_id=account_id, region='EU')            
+                env_ids = await get_vendors_ids_by_account_id(account_id=account_id, region='US')            
 
             if env_ids:
                 for id in env_ids:    
@@ -163,10 +163,10 @@ async def white_label():
                         
                 return jsonify({'status_code': 200, 'number_of_envs': len(env_ids), 'white_labeled': white_label_counter})        
         
-        return jsonify({'Error': 'You selected the body-param as disabled'})
+        return jsonify({'error': 'You selected the body-param as disabled'})
     
     else:
-        return jsonify({'Error': 'Method not allowed'})
+        return jsonify({'error': 'Method not allowed'})
 
 
 if __name__ == '__main__':
