@@ -128,7 +128,11 @@ async def white_label():
     if request.method == 'POST':
         data = json.loads(request.data)
         vendor_id = data.get('vendorId', '')
+        # implement white label by account tenant id 
+        account_tenant_id = data.get('accountTenantId', '')
         is_enabled = data.get('isEnabled', '')
+        region = data.get('region', '')
+        
         stripped_vendor_id = str(vendor_id).strip('\'"')
         is_valid = validate_uuid(uuid_string=stripped_vendor_id)
         white_label_counter = 0
@@ -144,23 +148,24 @@ async def white_label():
                 production_client_secret=production_secret
                 )
         
-            account_id = await get_account_id_by_vendor_id(vendor_id=stripped_vendor_id, region='US')
-            
-            if account_id:
-                env_ids = await get_vendors_ids_by_account_id(account_id=account_id, region='US')            
+            account_id = await get_account_id_by_vendor_id(vendor_id=stripped_vendor_id, region=region)
 
+            if account_id:
+                env_ids = await get_vendors_ids_by_account_id(account_id=account_id, region=region)            
+                
             if env_ids:
                 for id in env_ids:    
 
                     response = request_white_lable(
                         is_enabled=is_enabled, 
                         vendor_id=id, 
-                        token=auth_response.get('token')
+                        token=auth_response.get('token'),
+                        region=region
                         )
                     
                     if response.get('status_code') == 200:
-                        white_label_counter += 1
-                        
+                        white_label_counter = await check_if_white_labled(vendor_id=vendor_id, white_label_counter=white_label_counter, region=region)
+                                    
                 return jsonify({'status_code': 200, 'number_of_envs': len(env_ids), 'white_labeled': white_label_counter})        
         
         return jsonify({'error': 'You selected the body-param as disabled'})

@@ -159,6 +159,14 @@ async def get_all_account_data_by_vendor_id(vendor_id: str,  region: Optional[st
     account_dict = object_to_dict(obj=account)
     
     return account_dict
+
+async def check_if_white_labled(vendor_id: str, white_label_counter: int, region: Optional[str] = None) -> int:
+    vendor_dict = await _fetch_vendor_by_id_from_db(vendor_id=vendor_id, region=region)
+    is_white_labeled = vendor_dict.get('whiteLabelMode')
+    if is_white_labeled == 1:
+        white_label_counter += 1
+        
+    return white_label_counter 
     
 async def _fetch_account_dict_by_vendor_id_from_db(vendor_id: str,  region: Optional[str] = None) -> Tuple[Dict[str,str], Dict[str,str], Optional[aiomysql.pool.Pool]]:
     """
@@ -530,7 +538,7 @@ async def remove_trial_process(vendor_id: str, region: Optional[str] = None) -> 
         
     return None
 
-async def get_account_id_by_vendor_id(vendor_id: str, region: str) -> Optional[str]:
+async def get_account_id_by_vendor_id(vendor_id: str, region: str = 'EU') -> Optional[str]:
     
     db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
      
@@ -544,16 +552,20 @@ async def get_account_id_by_vendor_id(vendor_id: str, region: str) -> Optional[s
         
     return None
 
-async def get_vendors_ids_by_account_id(account_id: str, region: str) -> Optional[str]:
+async def get_vendors_ids_by_account_id(account_id: str, region: str = 'EU') -> Optional[List[str]]:
     
     db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
-     
     
     vendor_query_result = await fetch_all_query(db_pool=db_pool, query=GET_VENDORS_IDS_BY_ACCOUNT_ID_QUERY.format(f"'{account_id}'"))
+    
     if vendor_query_result:     
         db_pool.close()     
+        env_list = []
         
-        return vendor_query_result.get('id')
+        for vendor in vendor_query_result:
+            env_list.append(vendor.get('id'))
+        
+        return env_list
     
     db_pool.close()  
     return None

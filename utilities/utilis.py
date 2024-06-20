@@ -1,20 +1,13 @@
-from enum import Enum
 import re
 from typing import Tuple
 
-from .db_and_queries.connections_and_queries import *
+from db_and_queries.connections_and_queries import *
 from dotenv import load_dotenv
 from consts import *
 import requests
 import os
 import uuid
 
-class BaseUrl(Enum):
-    eu = BASE_EU_PATH
-    us = BASE_US_PATH
-    ca = BASE_CA_PATH
-    au = BASE_AU_PATH
-    
 def validate_uuid(uuid_string: str) -> bool:
     """
     Validates whether the given string is a valid UUID (Universally Unique Identifier) version 4.
@@ -47,7 +40,7 @@ def authenticate_as_vendor(production_client_id: str, production_client_secret: 
     Returns:
         The function returns the JSON response from the authentication API.
     """
-    url = BASE_EU_PATH + FRONTEGG_AUTH_AS_VENDOR
+    url = "https://api.frontegg.com/auth/vendor/"
     headers = {
         "accept": "application/json",
         "content-type": "application/json"
@@ -99,7 +92,7 @@ def get_production_env_variables() -> Tuple[str,str]:
     
     return production_client_id, production_secret
 
-def request_white_lable(is_enabled: bool, vendor_id: str, token: str, region: str = 'EU') -> Tuple[str,str]:
+def request_white_lable(is_enabled: bool, vendor_id: str, token: str) -> Tuple[str,str]:
     """
     Sends a PUT request to the FrontEgg API to enable or disable the white-label mode for a specific vendor.
 
@@ -111,9 +104,8 @@ def request_white_lable(is_enabled: bool, vendor_id: str, token: str, region: st
     Returns:
         Tuple[str, str]: A tuple containing the HTTP status code (first element) and the response text (second element) from the API.
     """
-
-    url =  BaseUrl.__members__[region.lower()].value + FRONTEGG_WHITE_LABEL 
-        
+    url = "https://api.frontegg.com/vendors/whitelabel-mode"
+    
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
@@ -129,7 +121,7 @@ def request_white_lable(is_enabled: bool, vendor_id: str, token: str, region: st
     
     return {"status_code": response.status_code, "text": response.text}
 
-async def is_valid_email(email: str) -> bool:
+def is_valid_email(email: str) -> bool:
     """
     Validate the given email address using regular expressions.
 
@@ -140,7 +132,8 @@ async def is_valid_email(email: str) -> bool:
         bool: True if the email address is valid, False otherwise.
     """
     # Regular expression pattern for email validation
-    email_regex = "^([^\s@]+@[^\s@]+\.[^\s@]+)$"
+    email_regex = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+
     # Check if the email matches the pattern
     if re.match(email_regex, email):
         return True
@@ -152,21 +145,21 @@ def is_valid_ticket_id(ticket_id: str) -> bool:
     Validate the given ticket id using regular expressions.
 
     Args:
-        ticket (str): The ticket id to be validated.
+        email (str): The ticket id to be validated.
 
     Returns:
         bool: True if the ticket id is valid, False otherwise.
     """
     # Regular expression pattern for email validation
-    ticket_regex = r'^\d{4}$'
+    email_regex = r'^[\w\.-]+@[\w\.-]+\.\w+$'
 
     # Check if the email matches the pattern
-    if re.match(ticket_regex, ticket_id):
+    if re.match(email_regex, ticket_id):
         return True
     else:
         return False
 
-async def is_domain_in_email(email: str, domain: str) -> bool:
+def is_domain_in_email(email: str, domain: str) -> bool:
     """
     Checks if the given domain is present in the email address.
 
@@ -186,26 +179,3 @@ async def is_domain_in_email(email: str, domain: str) -> bool:
     else:
         return False
     
-def object_to_dict(obj, exclude_keys=None) -> Dict[str,str]:
-    """
-    Recursively converts an object and its nested objects into a dictionary.
-
-    Args:
-        obj (object): The object to be converted to a dictionary.
-        exclude_keys (list or None): A list of keys to exclude from the dictionary.
-
-    Returns:
-        dict: A dictionary representing the object and its nested objects.
-    """
-    if exclude_keys is None:
-        exclude_keys = []
-
-    if isinstance(obj, dict):
-        return {k: object_to_dict(v, exclude_keys) for k, v in obj.items() if k not in exclude_keys}
-    elif isinstance(obj, (list, tuple, set)):
-        return [object_to_dict(item, exclude_keys) for item in obj]
-    elif hasattr(obj, "__dict__"):
-        obj_dict = {k: object_to_dict(v, exclude_keys) for k, v in obj.__dict__.items() if k not in exclude_keys}
-        return obj_dict
-    else:
-        return obj

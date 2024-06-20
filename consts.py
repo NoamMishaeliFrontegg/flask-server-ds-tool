@@ -1,4 +1,8 @@
-BASE_PATH = 'https://api.frontegg.com'
+BASE_EU_PATH = 'https://api.frontegg.com'
+BASE_US_PATH = 'https://api.us.frontegg.com'
+BASE_CA_PATH = 'https://api.ca.frontegg.com'
+BASE_AU_PATH = 'https://api.au.frontegg.com'
+
 SUBSCRIPTION_CONFIGURATION = '/subscriptions/resources/billing/tenant-configurations/v1/'
 ZENDESK_TICKET_URL = 'https://frontegg-help.zendesk.com/api/v2/tickets/'
 FRONTEGG_WHITE_LABEL = '/vendors/whitelabel-mode'
