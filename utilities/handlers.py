@@ -159,6 +159,27 @@ async def get_all_account_data_by_vendor_id(vendor_id: str,  region: Optional[st
     account_dict = object_to_dict(obj=account)
     
     return account_dict
+
+async def check_if_white_label(vendor_id: str, region: Optional[str] = None) -> int:
+    """
+    Check if a vendor is in white label mode.
+
+    Args:
+        vendor_id (str): The unique identifier of the vendor.
+        region (Optional[str]): The region to search for the vendor. Defaults to None.
+
+    Returns:
+        int: vendor_id if the vendor is in white label mode, 0 otherwise.
+
+    Note:
+        Relies on _fetch_vendor_by_id_from_db for fetching vendor data.
+    """
+    vendor_dict = await _fetch_vendor_by_id_from_db(vendor_id=vendor_id, region=region)
+    is_white_labeled = vendor_dict.get('whiteLabelMode')
+    if is_white_labeled == 1:
+        return vendor_id 
+    
+    return 0
     
 async def _fetch_account_dict_by_vendor_id_from_db(vendor_id: str,  region: Optional[str] = None) -> Tuple[Dict[str,str], Dict[str,str], Optional[aiomysql.pool.Pool]]:
     """
@@ -505,6 +526,54 @@ async def _fetch_vendor_by_id_from_db(vendor_id: str, region: Optional[str] = No
     
     return vendor_dict
     
+async def handle_white_label_process(vendor_id: str, account_id: str, is_enabled: str, region: str) -> Optional[Dict[str,str]]:
+    # should implement the accounttenantid process
+    
+    if not account_id and not vendor_id:
+        return jsonify({'error': 'None'})
+        
+    stripped_vendor_id = str(vendor_id).strip('\'"')
+    is_valid = validate_uuid(uuid_string=stripped_vendor_id)
+    white_label_counter = 0
+    white_label_vendors = []
+    
+    if not is_valid:
+        return jsonify({'error': 'Invalid ID'})
+    
+    if bool(is_enabled):
+        production_client_id, production_secret = get_production_env_variables()
+
+        auth_response = authenticate_as_vendor(
+            production_client_id=production_client_id, 
+            production_client_secret=production_secret
+            )
+    
+        account_id = await get_account_id_by_vendor_id(vendor_id=stripped_vendor_id, region=region)
+
+        if account_id:
+            env_ids = await get_vendors_ids_by_account_id(account_id=account_id, region=region)            
+
+        if env_ids:
+            for id in env_ids:    
+
+                response = request_white_lable(
+                    is_enabled=is_enabled, 
+                    vendor_id=id, 
+                    token=auth_response.get('token'),
+                    region=region
+                    )
+                
+                if response.get('status_code') == 200:
+                    print("\nMAIN\n", id)
+                    is_vendor_white_label = await check_if_white_label(vendor_id=id, region=region)
+                    
+                    if is_vendor_white_label != 0:
+                        white_label_counter += 1
+                        white_label_vendors.append(id)
+                                
+            return jsonify({'status_code': 200, 'number_of_envs': len(env_ids), 'white_labeled': white_label_counter, 'white_labeled_vendors': white_label_vendors})        
+    
+    return jsonify({'error': 'You selected the body-param as disabled'})
 
 # TODO: fix remove trial and white label to work with all regions 
 
@@ -530,7 +599,7 @@ async def remove_trial_process(vendor_id: str, region: Optional[str] = None) -> 
         
     return None
 
-async def get_account_id_by_vendor_id(vendor_id: str, region: str) -> Optional[str]:
+async def get_account_id_by_vendor_id(vendor_id: str, region: str = 'EU') -> Optional[str]:
     
     db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
      
@@ -544,16 +613,19 @@ async def get_account_id_by_vendor_id(vendor_id: str, region: str) -> Optional[s
         
     return None
 
-async def get_vendors_ids_by_account_id(account_id: str, region: str) -> Optional[str]:
+async def get_vendors_ids_by_account_id(account_id: str, region: str = 'EU') -> Optional[List[str]]:
     
     db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
-     
     
     vendor_query_result = await fetch_all_query(db_pool=db_pool, query=GET_VENDORS_IDS_BY_ACCOUNT_ID_QUERY.format(f"'{account_id}'"))
     if vendor_query_result:     
         db_pool.close()     
+        env_list = []
         
-        return vendor_query_result.get('id')
+        for vendor in vendor_query_result:
+            env_list.append(vendor.get('id'))
+        
+        return env_list
     
     db_pool.close()  
     return None

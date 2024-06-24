@@ -67,7 +67,6 @@ async def get_data_by_email():
         
         email = data.get('emailAddress', '')
         region = data.get('region', None)
-
         is_valid = await is_valid_email(email=email)
 
         if not is_valid:
@@ -127,43 +126,62 @@ async def remove_trial():
 async def white_label():
     if request.method == 'POST':
         data = json.loads(request.data)
-        vendor_id = data.get('vendorId', '')
+
+        vendor_id = data.get('vendorId', None)
+        account_tenant_id = data.get('accountTenantId', None)
         is_enabled = data.get('isEnabled', '')
-        stripped_vendor_id = str(vendor_id).strip('\'"')
-        is_valid = validate_uuid(uuid_string=stripped_vendor_id)
-        white_label_counter = 0
-
-        if not is_valid:
-            return jsonify({'error': 'Invalid ID'})
+        region = data.get('region', '')
         
-        if bool(is_enabled):
-            production_client_id, production_secret = get_production_env_variables()
-
-            auth_response = authenticate_as_vendor(
-                production_client_id=production_client_id, 
-                production_client_secret=production_secret
-                )
+        data = await handle_white_label_process(
+            vendor_id=vendor_id, 
+            account_tenant_id=account_tenant_id, 
+            is_enabled=is_enabled,
+            region=region
+            )
         
-            account_id = await get_account_id_by_vendor_id(vendor_id=stripped_vendor_id, region='US')
-            
-            if account_id:
-                env_ids = await get_vendors_ids_by_account_id(account_id=account_id, region='US')            
+        return data
+        # stripped_vendor_id = str(vendor_id).strip('\'"')
+        # is_valid = validate_uuid(uuid_string=stripped_vendor_id)
+        # white_label_counter = 0
+        # white_label_vendors = []
 
-            if env_ids:
-                for id in env_ids:    
+        # if not is_valid:
+        #     return jsonify({'error': 'Invalid ID'})
+        
+        # if bool(is_enabled):
+        #     production_client_id, production_secret = get_production_env_variables()
 
-                    response = request_white_lable(
-                        is_enabled=is_enabled, 
-                        vendor_id=id, 
-                        token=auth_response.get('token')
-                        )
+        #     auth_response = authenticate_as_vendor(
+        #         production_client_id=production_client_id, 
+        #         production_client_secret=production_secret
+        #         )
+        
+        #     account_id = await get_account_id_by_vendor_id(vendor_id=stripped_vendor_id, region=region)
+
+        #     if account_id:
+        #         env_ids = await get_vendors_ids_by_account_id(account_id=account_id, region=region)            
+
+        #     if env_ids:
+        #         for id in env_ids:    
+
+        #             response = request_white_lable(
+        #                 is_enabled=is_enabled, 
+        #                 vendor_id=id, 
+        #                 token=auth_response.get('token'),
+        #                 region=region
+        #                 )
                     
-                    if response.get('status_code') == 200:
-                        white_label_counter += 1
+        #             if response.get('status_code') == 200:
+        #                 print("\nMAIN\n", id)
+        #                 is_vendor_white_label = await check_if_white_label(vendor_id=id, region=region)
                         
-                return jsonify({'status_code': 200, 'number_of_envs': len(env_ids), 'white_labeled': white_label_counter})        
+        #                 if is_vendor_white_label != 0:
+        #                     white_label_counter += 1
+        #                     white_label_vendors.append(id)
+                                    
+        #         return jsonify({'status_code': 200, 'number_of_envs': len(env_ids), 'white_labeled': white_label_counter, 'white_labeled_vendors': white_label_vendors})        
         
-        return jsonify({'error': 'You selected the body-param as disabled'})
+        # return jsonify({'error': 'You selected the body-param as disabled'})
     
     else:
         return jsonify({'error': 'Method not allowed'})
