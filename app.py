@@ -9,6 +9,7 @@ PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(PROJECT_ROOT)
 
 from flask import Flask, request, jsonify
+from utilities.logger_config import logger, log_execution_time
 
 import json
 from flask_cors import CORS
@@ -21,23 +22,25 @@ CORS(app)  # Enable CORS for all routes
 
 
 @app.route('/get_all_data_by_vendor_id', methods=['POST'])
+@log_execution_time
 async def get_data_by_vendor_id():
     if request.method == 'POST':
         data = json.loads(request.data)
-        
         vendor_id = data.get('vendorId', '')
         region = data.get('region', None)
-
+        
         is_valid = validate_uuid(uuid_string=vendor_id)
 
         if not is_valid:
             return jsonify({'error': 'Invalid vendor id'})
         
         data = await get_all_account_data_by_vendor_id(vendor_id=vendor_id, region=region)
+        logger.info('finished fetching account data by vendor id')
 
         return data
     
     else:
+        logger.error('request\'s method not allowed')
         return jsonify({'error': 'Method not allowed'})
 
 @app.route('/get_all_data_by_tenant_id', methods=['POST'])
@@ -47,11 +50,6 @@ async def get_data_by_tenant_id():
         
         tenant_id = data.get('tenantId', '')
         region = data.get('region', None)
-
-        is_valid = validate_uuid(uuid_string=tenant_id)
-
-        if not is_valid:
-            return jsonify({'error': 'Invalid tenant id'})
         
         data = await get_all_account_data_by_tenant_id(tenant_id=tenant_id, region=region)
 

@@ -14,7 +14,8 @@ class BaseUrl(Enum):
     us = BASE_US_PATH
     ca = BASE_CA_PATH
     au = BASE_AU_PATH
-    
+
+@log_execution_time    
 def validate_uuid(uuid_string: str) -> bool:
     """
     Validates whether the given string is a valid UUID (Universally Unique Identifier) version 4.
@@ -36,6 +37,7 @@ def validate_uuid(uuid_string: str) -> bool:
     
     return is_valid
 
+@log_execution_time
 def authenticate_as_vendor(production_client_id: str, production_client_secret: str):
     """
     Authenticates with the FrontEgg API as a vendor using the provided production client ID and secret.
@@ -60,6 +62,7 @@ def authenticate_as_vendor(production_client_id: str, production_client_secret: 
 
     return response.json()
 
+@log_execution_time
 def remove_trial_request(tenant_id, id, production_vendor_token):
     """
     Sends a PUT request to the FrontEgg API to remove a trial request for a specific tenant and configuration ID.
@@ -86,6 +89,7 @@ def remove_trial_request(tenant_id, id, production_vendor_token):
     response = requests.put(url, headers=headers, json=payload)
     return response.status_code
 
+@log_execution_time
 def get_production_env_variables() -> Tuple[str,str]:    
     """
     Retrieves the production client ID and secret from environment variables.
@@ -99,6 +103,7 @@ def get_production_env_variables() -> Tuple[str,str]:
     
     return production_client_id, production_secret
 
+@log_execution_time
 def request_white_lable(is_enabled: bool, vendor_id: str, token: str, region: str = 'EU') -> Tuple[str,str]:
     """
     Sends a PUT request to the FrontEgg API to enable or disable the white-label mode for a specific vendor.
@@ -129,6 +134,7 @@ def request_white_lable(is_enabled: bool, vendor_id: str, token: str, region: st
     
     return {"status_code": response.status_code, "text": response.text}
 
+@log_execution_time
 async def is_valid_email(email: str) -> bool:
     """
     Validate the given email address using regular expressions.
@@ -140,13 +146,15 @@ async def is_valid_email(email: str) -> bool:
         bool: True if the email address is valid, False otherwise.
     """
     # Regular expression pattern for email validation
-    email_regex = "^([^\s@]+@[^\s@]+\.[^\s@]+)$"
+    email_regex = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+
     # Check if the email matches the pattern
     if re.match(email_regex, email):
         return True
     else:
         return False
-    
+ 
+@log_execution_time   
 def is_valid_ticket_id(ticket_id: str) -> bool:
     """
     Validate the given ticket id using regular expressions.
@@ -166,6 +174,7 @@ def is_valid_ticket_id(ticket_id: str) -> bool:
     else:
         return False
 
+@log_execution_time
 async def is_domain_in_email(email: str, domain: str) -> bool:
     """
     Checks if the given domain is present in the email address.
@@ -185,7 +194,7 @@ async def is_domain_in_email(email: str, domain: str) -> bool:
         return True
     else:
         return False
-    
+ 
 def object_to_dict(obj, exclude_keys=None) -> Dict[str,str]:
     """
     Recursively converts an object and its nested objects into a dictionary.

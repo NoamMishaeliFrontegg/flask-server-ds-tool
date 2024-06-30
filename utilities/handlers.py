@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from models.models import Account, SAML_groups, SSO_configs, Tenant, Vendor
 from utilities.db_and_queries.connections_and_queries import check_in_all_dbs, connect_to_db, fetch_all_query, fetch_one_query
 from utilities.zendesk_api.zendesk_requests import get_auth_header_from_zendesk_api, get_ticket_emails_from_zd_dict, get_users_from_zd_ticket
+from utilities.logger_config import log_execution_time, logger
 
 from .utils import object_to_dict
 
@@ -17,7 +18,7 @@ class QueryEnum(Enum):
     tenant = GET_ACCOUNT_BY_ID_QUERY
     vendor = GET_VENDOR_BY_ID_QUERY
 
-
+@log_execution_time
 async def get_all_account_data_by_zendesk_ticket_number(ticket_number: str) -> Optional[Dict]:
     """
     Retrieves all account data associated with a given Zendesk ticket number.
@@ -51,6 +52,7 @@ async def get_all_account_data_by_zendesk_ticket_number(ticket_number: str) -> O
     
     return {'error': 'ticket was not found'}   
 
+@log_execution_time
 async def get_all_account_data_by_user_email(user_email: str, region: Optional[str] = None) -> Dict[str,str]:    
     """
     Retrieves all account data associated with a given user email address.
@@ -88,6 +90,7 @@ async def get_all_account_data_by_user_email(user_email: str, region: Optional[s
     
     return account 
 
+@log_execution_time
 async def get_all_account_data_by_tenant_id(tenant_id: str,  region: Optional[str] = None) -> Dict[str,str]: 
     """
     Retrieves all account data associated with a given tenant ID.
@@ -117,6 +120,7 @@ async def get_all_account_data_by_tenant_id(tenant_id: str,  region: Optional[st
     
     return account 
 
+@log_execution_time
 async def get_all_account_data_by_vendor_id(vendor_id: str,  region: Optional[str] = None) -> Dict[str,str]:
     """
     Retrieves all account data associated with a given vendor ID.
@@ -135,7 +139,6 @@ async def get_all_account_data_by_vendor_id(vendor_id: str,  region: Optional[st
     """
     load_dotenv()
     prod_vendor_id = os.getenv("PROD_VENDOR_ID")
-    
     if vendor_id == prod_vendor_id:
         return jsonify({'error': 'Nice try! are trying to f@#k my app?!\nDONT ENTER FRONTEGG\'S PROD ID'})
     
@@ -160,6 +163,7 @@ async def get_all_account_data_by_vendor_id(vendor_id: str,  region: Optional[st
     
     return account_dict
 
+@log_execution_time
 async def check_if_white_label(vendor_id: str, region: Optional[str] = None) -> int:
     """
     Check if a vendor is in white label mode.
@@ -180,7 +184,8 @@ async def check_if_white_label(vendor_id: str, region: Optional[str] = None) -> 
         return vendor_id 
     
     return 0
-    
+
+@log_execution_time
 async def _fetch_account_dict_by_vendor_id_from_db(vendor_id: str,  region: Optional[str] = None) -> Tuple[Dict[str,str], Dict[str,str], Optional[aiomysql.pool.Pool]]:
     """
     Retrieves the account dictionary, account main data, and a database connection pool associated with a given vendor ID.
@@ -226,6 +231,7 @@ async def _fetch_account_dict_by_vendor_id_from_db(vendor_id: str,  region: Opti
     
     return account_dict, {'account_id': vendor_dict.get('accountId'),'region': vendor_dict.get('region')}, db_pool
 
+@log_execution_time
 async def _fetch_all_vendors_by_account_id_from_db(account_id: str, db_pool: aiomysql.pool.Pool) -> List[Vendor]:
     """
     Retrieves a list of Vendor objects associated with a given account ID.
@@ -265,6 +271,7 @@ async def _fetch_all_vendors_by_account_id_from_db(account_id: str, db_pool: aio
     
     return vendors_list
 
+@log_execution_time
 async def _fetch_all_tenants_by_vendor_id_from_db(vendor_id: str, db_pool: aiomysql.pool.Pool) -> List[Tenant]:
     """
     Retrieves a list of Tenant objects associated with a given vendor ID.
@@ -302,6 +309,7 @@ async def _fetch_all_tenants_by_vendor_id_from_db(vendor_id: str, db_pool: aiomy
         
     return tenants_list
 
+@log_execution_time
 async def _fetch_sso_configs_by_account_id_from_db(account_id: str, db_pool: aiomysql.pool.Pool) -> Tuple[List[SSO_configs], str]:
     """
     Retrieves a list of SSO configuration objects and the SSO configuration ID associated with a given account ID.
@@ -351,7 +359,8 @@ async def _fetch_sso_configs_by_account_id_from_db(account_id: str, db_pool: aio
             sso_config_obj_list.append(sso_config_obj)
     
     return sso_config_obj_list, config_id
-    
+
+@log_execution_time    
 async def _fetch_saml_groups_by_config_id_from_db(config_id: str, db_pool: aiomysql.pool.Pool) -> List[SAML_groups]:
     """
     Retrieves a list of SAML group objects associated with a given SSO configuration ID.
@@ -383,7 +392,8 @@ async def _fetch_saml_groups_by_config_id_from_db(config_id: str, db_pool: aiomy
             saml_groups_obj.append(saml_group_obj)
     
     return saml_groups_obj
-    
+
+@log_execution_time    
 async def _fetch_account_tenant_id_by_customer_email_from_db(email: str, region: Optional[str] = None) -> Optional[Dict]:
     """
     Retrieves the account tenant ID associated with a given customer email address.
@@ -414,6 +424,7 @@ async def _fetch_account_tenant_id_by_customer_email_from_db(email: str, region:
     
     return None
 
+@log_execution_time
 async def _fetch_tenant_id_by_account_tenant_id_from_db(account_tenant_id: str, region: Optional[str] = None) -> Optional[Dict]:
     """
     Retrieves the tenant ID associated with a given account tenant ID.
@@ -443,6 +454,7 @@ async def _fetch_tenant_id_by_account_tenant_id_from_db(account_tenant_id: str, 
     
     return None
 
+@log_execution_time
 async def _fetch_vendor_id_by_account_id_from_db(account_id: str, region: Optional[str] = None) -> Optional[Dict]:
     """
     Retrieves the vendor ID associated with a given account ID.
@@ -472,6 +484,7 @@ async def _fetch_vendor_id_by_account_id_from_db(account_id: str, region: Option
     
     return None
 
+@log_execution_time
 async def _fetch_account_by_tenant_id_from_db(tenant_id: str, region: Optional[str] = None) -> Optional[Dict]:
     """
     Retrieves the account dictionary associated with a given tenant ID.
@@ -489,7 +502,6 @@ async def _fetch_account_by_tenant_id_from_db(tenant_id: str, region: Optional[s
     """
     if not region:
         account_dict = await check_in_all_dbs(func=fetch_one_query, query=GET_ACCOUNT_BY_ID_QUERY.format(f"'{tenant_id}'"), db_type='GENERAL')
-        # region = account_dict.get('region')
         
     else:
         db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_GENERAL_{region}', passwd=f'PASSWD_GENERAL_{region}')
@@ -500,6 +512,7 @@ async def _fetch_account_by_tenant_id_from_db(tenant_id: str, region: Optional[s
     
     return account_dict
 
+@log_execution_time
 async def _fetch_vendor_by_id_from_db(vendor_id: str, region: Optional[str] = None) -> Optional[Dict]:
     """
     Retrieves the vendor dictionary associated with a given vendor ID.
@@ -525,7 +538,8 @@ async def _fetch_vendor_by_id_from_db(vendor_id: str, region: Optional[str] = No
         await db_pool.wait_closed()
     
     return vendor_dict
-    
+
+@log_execution_time    
 async def handle_white_label_process(vendor_id: str, account_id: str, is_enabled: str, region: str) -> Optional[Dict[str,str]]:
     # should implement the accounttenantid process
     
@@ -564,7 +578,6 @@ async def handle_white_label_process(vendor_id: str, account_id: str, is_enabled
                     )
                 
                 if response.get('status_code') == 200:
-                    print("\nMAIN\n", id)
                     is_vendor_white_label = await check_if_white_label(vendor_id=id, region=region)
                     
                     if is_vendor_white_label != 0:

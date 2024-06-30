@@ -1,12 +1,14 @@
 from typing import Any, Callable, Dict, Optional, Tuple, List, Union
-import mysql.connector
 from consts import *
 import aiomysql
 import os
 from dotenv import load_dotenv
 
+from utilities.logger_config import log_execution_time, logger
+
 load_dotenv('.env')
 
+@log_execution_time
 async def connect_to_db(user_name: str, host: str, passwd: str) -> aiomysql.pool.Pool:
     """
     Establish a connection to the database and return a connection pool.
@@ -60,10 +62,10 @@ async def fetch_one_query(db_pool: aiomysql.pool.Pool, query: str, args: Any=Non
                     return None
                 
     except aiomysql.Error as e:
-        print(f"MySQL Error: {e}")
+        logger.error('MySQL Error: {e}')
         return None
     except Exception as e:
-        print(f"Unexpected Error: {e}")
+        logger.error('Unexpected Error: {e}')
         return None
     
     finally:
@@ -94,15 +96,16 @@ async def fetch_all_query(db_pool: aiomysql.pool.Pool, query: str, args: Any=Non
         return result_list
             
     except aiomysql.Error as e:
-        print(f"MySQL Error: {e}")
+        logger.error('MySQL Error: {e}')
         return None
     except Exception as e:
-        print(f"Unexpected Error: {e}")
+        logger.error('Unexpected Error: {e}')
         return None
     
     finally:
         await db_pool._wakeup()
 
+@log_execution_time
 async def check_in_all_dbs(func: Callable[..., Tuple[Any, Any]], db_type: Optional[str] = GENERAL, *args: Any, **kwargs: Any) -> Dict[str,str]:
     """
     Check all databases for the requested data using the specified function.
@@ -120,6 +123,7 @@ async def check_in_all_dbs(func: Callable[..., Tuple[Any, Any]], db_type: Option
         Dict[str, str]: A dictionary containing the fetched data and the region, or None if no data is found.
     """
     for region in REGIONS:
+        logger.debug(f'checking in {region}')
         db_pool  = await connect_to_db(user_name='USER_NAME', host=f'HOST_{db_type}_{region}', passwd=f'PASSWD_{db_type}_{region}')
 
         data = await func(db_pool=db_pool,*args, **kwargs)
@@ -132,9 +136,11 @@ async def check_in_all_dbs(func: Callable[..., Tuple[Any, Any]], db_type: Option
         
         db_pool.close()
         await db_pool.wait_closed()
+        logger.debug(f'could not find in {region}')
 
     return None
 
+@log_execution_time
 async def fetching_account_tenant_id_by_email(db_pool: aiomysql.pool.Pool, email: str) -> Dict[str,str]:
     """
     Fetch the account tenant ID by email from the database.
@@ -158,6 +164,7 @@ async def fetching_account_tenant_id_by_email(db_pool: aiomysql.pool.Pool, email
     
     return None
 
+@log_execution_time
 async def fetching_account_id_by_account_tenant_id(db_pool: aiomysql.pool.Pool, account_tenant_id: str) -> Dict[str,str]:
     """
     Fetch the account ID by account tenant ID from the database.
@@ -181,6 +188,7 @@ async def fetching_account_id_by_account_tenant_id(db_pool: aiomysql.pool.Pool, 
     
     return None
 
+@log_execution_time
 async def fetching_vendor_id_by_account_id(db_pool: aiomysql.pool.Pool, account_id: str) -> Dict[str,str]:
     """
     Fetch the vendor ID by account ID from the database.
@@ -204,6 +212,7 @@ async def fetching_vendor_id_by_account_id(db_pool: aiomysql.pool.Pool, account_
     
     return None
 
+@log_execution_time
 async def fetching_tenant_dict_from_db(db_pool: aiomysql.pool.Pool, client_id: str) -> Dict[str,str]:
     """
     Fetch the tenant dictionary from the database using the client ID.
