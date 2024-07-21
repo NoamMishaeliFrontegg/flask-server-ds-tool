@@ -30,12 +30,15 @@ GET_TENANT_CONFIGURATIONS_QUERY = 'SELECT x.* from frontegg_subscriptions.tenant
 
 GET_ACCOUNT_TENANT_ID_BY_EMAIL_AND_FE_PROD_ID = 'SELECT * FROM frontegg_identity.users u WHERE u.email={} AND u.vendorId={}'
 
+GET_ALL_ENV_NAMES_BY_VENDOR_ID = 'SELECT v.environmentName FROM frontegg_vendors.vendors v WHERE v.id ={}'
+
+
 AND_DOMAIN = 'AND sd.domain = {}'
 
 GENERAL = 'GENERAL'
 IDENTITY = 'IDENTITY'
-REGIONS = ['EU', 'US']
-# REGIONS = ['EU', 'US', 'CA', 'AU']
+# REGIONS = ['EU', 'US']
+REGIONS = ['EU', 'US', 'CA', 'AP']
 
 # TODO:
 # 1. edge case :: in search in all regions when an account is under few regions (for example - Talon) 

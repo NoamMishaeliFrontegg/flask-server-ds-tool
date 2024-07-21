@@ -243,3 +243,14 @@ async def fetching_tenant_dict_from_db(db_pool: aiomysql.pool.Pool, client_id: s
         return { 'id': tenant_query_result.get('id'), 'tenant_id': tenant_query_result.get('tenantId')}
     
     return {}
+
+
+async def fetching_env_name_by_vendor_id(db_pool: aiomysql.pool.Pool, vendor_id: str) -> Dict[str,str]:
+    query = GET_ACCOUNT_TENANT_ID_BY_EMAIL_AND_FE_PROD_ID.format(f"'{vendor_id}'")
+
+    data = await fetch_one_query(db_pool=db_pool, query=query)
+    
+    if data:
+        return data
+    
+    return None

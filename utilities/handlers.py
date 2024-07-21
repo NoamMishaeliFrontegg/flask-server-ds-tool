@@ -138,9 +138,9 @@ async def get_all_account_data_by_vendor_id(vendor_id: str,  region: Optional[st
         Dict[str, str]: A dictionary containing the account data, or an error message if no account is found.
     """
     load_dotenv()
-    prod_vendor_id = os.getenv("PROD_VENDOR_ID")
-    if vendor_id == prod_vendor_id:
-        return jsonify({'error': 'Nice try! are trying to f@#k my app?!\nDONT ENTER FRONTEGG\'S PROD ID'})
+    # prod_vendor_id = os.getenv("PROD_VENDOR_ID")
+    # if vendor_id == prod_vendor_id:
+    #     return jsonify({'error': 'Nice try! are trying to f@#k my app?!\nDONT ENTER FRONTEGG\'S PROD ID'})
     
     account_dict, account_main_data, db_pool = await _fetch_account_dict_by_vendor_id_from_db(vendor_id=vendor_id, region=region)
     
@@ -309,7 +309,6 @@ async def _fetch_all_tenants_by_vendor_id_from_db(vendor_id: str, db_pool: aiomy
         
     return tenants_list
 
-@log_execution_time
 async def _fetch_sso_configs_by_account_id_from_db(account_id: str, db_pool: aiomysql.pool.Pool) -> Tuple[List[SSO_configs], str]:
     """
     Retrieves a list of SSO configuration objects and the SSO configuration ID associated with a given account ID.
@@ -360,7 +359,6 @@ async def _fetch_sso_configs_by_account_id_from_db(account_id: str, db_pool: aio
     
     return sso_config_obj_list, config_id
 
-@log_execution_time    
 async def _fetch_saml_groups_by_config_id_from_db(config_id: str, db_pool: aiomysql.pool.Pool) -> List[SAML_groups]:
     """
     Retrieves a list of SAML group objects associated with a given SSO configuration ID.
