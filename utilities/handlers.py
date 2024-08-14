@@ -537,11 +537,11 @@ async def _fetch_vendor_by_id_from_db(vendor_id: str, region: Optional[str] = No
     
     return vendor_dict
 
-@log_execution_time    
-async def handle_white_label_process(vendor_id: str, account_id: str, is_enabled: str, region: str) -> Optional[Dict[str,str]]:
+@log_execution_time
+async def handle_white_label_process(vendor_id: str, account_tenant_id: str, is_enabled: str, region: str) -> Optional[Dict[str,str]]:
     # should implement the accounttenantid process
     
-    if not account_id and not vendor_id:
+    if not account_tenant_id and not vendor_id:
         return jsonify({'error': 'None'})
         
     stripped_vendor_id = str(vendor_id).strip('\'"')
@@ -642,3 +642,143 @@ async def get_vendors_ids_by_account_id(account_id: str, region: str = 'EU') -> 
     return None
 
 
+
+# ---------------------------------------- First Page Data ----------------------------------------------
+@log_execution_time
+async def get_main_page_results(user_email: str, region: Optional[str] = None) -> Dict[str,str]:        
+    """
+    should return regions the email is assigned to
+    Args:
+        user_email (str): _description_
+        region (Optional[str], optional): _description_. Defaults to None.
+
+    Returns:
+        Dict[str,str]: _description_
+    """
+
+    return {}
+
+# ---------------------------------------- Second Page Data ---------------------------------------------
+
+@log_execution_time
+async def get_environments_nested_page(env_ids_and_regions:  Dict[str,str]) -> Dict[str,str]:        
+    """
+    should return env. names and IDs, applications names and IDs
+    Args:
+        user_email (str): _description_
+        region (Optional[str], optional): _description_. Defaults to None.
+
+    Returns:
+        Dict[str,str]: _description_
+    """
+        
+    backoffice_objects = _get_backoffice_main_objects()
+    applications = _get_main_applications_objects()
+    
+    tenants = _get_environments_tenants()
+
+    return {}
+
+@log_execution_time
+async def get_applications_nested_page(env_ids_and_regions:  Dict[str,str]) -> Dict[str,str]:        
+    """
+    check in all DBs where uesr email exists and returns main/first page data 
+    Args:
+        user_email (str): _description_
+        region (Optional[str], optional): _description_. Defaults to None.
+
+    Returns:
+        Dict[str,str]: _description_
+    """
+    
+    applications_tenants = _get_applications_tenants()
+
+    return {}
+
+@log_execution_time
+async def get_builder_settings(env_id: str, region: Optional[str] = None) -> Dict[str,str]:        
+    """
+    getting 2 most updated builder configration
+    Args:
+        user_email (str): _description_
+        region (Optional[str], optional): _description_. Defaults to None.
+
+    Returns:
+        Dict[str,str]: _description_
+    """
+
+    return {}
+
+# ---------------------------------------- Third Page Data ----------------------------------------------
+
+@log_execution_time
+async def get_tenants_data(env_ids_and_regions:  Dict[str,str]) -> Dict[str,str]:        
+    """
+    check in all DBs where uesr email exists and returns main/first page data 
+    Args:
+        user_email (str): _description_
+        region (Optional[str], optional): _description_. Defaults to None.
+
+    Returns:
+        Dict[str,str]: _description_
+    """
+    
+    return {}
+
+# ------------------------------------------------------------------------------------------------------
+
+@log_execution_time
+async def _get_backoffice_main_objects(user_email: str, region: Optional[str] = None) -> Dict[str,str]:        
+    """
+    check in all DBs where uesr email exists and returns regions with env. name and id 
+    Args:
+        user_email (str): _description_
+        region (Optional[str], optional): _description_. Defaults to None.
+
+    Returns:
+        Dict[str,str]: _description_
+    """
+
+    return {}
+
+@log_execution_time
+async def _get_main_applications_objects(env_id: str, region: Optional[str] = None) -> Dict[str,str]:        
+    """
+    getting application name and id
+    Args:
+        user_email (str): _description_
+        region (Optional[str], optional): _description_. Defaults to None.
+
+    Returns:
+        Dict[str,str]: _description_
+    """
+    return {}
+
+# -------------------------------------------------------------------------------------------------------
+
+@log_execution_time
+async def _get_environments_tenants(env_id: str, region: Optional[str] = None) -> Dict[str,str]:        
+    """
+    getting tenant names and ids
+    Args:
+        user_email (str): _description_
+        region (Optional[str], optional): _description_. Defaults to None.
+
+    Returns:
+        Dict[str,str]: _description_
+    """
+
+    return {}
+
+@log_execution_time
+async def _get_applications_tenants(env_id: str, region: Optional[str] = None) -> Dict[str,str]:        
+    """
+    getting applications tenants
+    Args:
+        user_email (str): _description_
+        region (Optional[str], optional): _description_. Defaults to None.
+
+    Returns:
+        Dict[str,str]: _description_
+    """
+    return {}

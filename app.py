@@ -138,48 +138,6 @@ async def white_label():
             )
         
         return data
-        # stripped_vendor_id = str(vendor_id).strip('\'"')
-        # is_valid = validate_uuid(uuid_string=stripped_vendor_id)
-        # white_label_counter = 0
-        # white_label_vendors = []
-
-        # if not is_valid:
-        #     return jsonify({'error': 'Invalid ID'})
-        
-        # if bool(is_enabled):
-        #     production_client_id, production_secret = get_production_env_variables()
-
-        #     auth_response = authenticate_as_vendor(
-        #         production_client_id=production_client_id, 
-        #         production_client_secret=production_secret
-        #         )
-        
-        #     account_id = await get_account_id_by_vendor_id(vendor_id=stripped_vendor_id, region=region)
-
-        #     if account_id:
-        #         env_ids = await get_vendors_ids_by_account_id(account_id=account_id, region=region)            
-
-        #     if env_ids:
-        #         for id in env_ids:    
-
-        #             response = request_white_lable(
-        #                 is_enabled=is_enabled, 
-        #                 vendor_id=id, 
-        #                 token=auth_response.get('token'),
-        #                 region=region
-        #                 )
-                    
-        #             if response.get('status_code') == 200:
-        #                 print("\nMAIN\n", id)
-        #                 is_vendor_white_label = await check_if_white_label(vendor_id=id, region=region)
-                        
-        #                 if is_vendor_white_label != 0:
-        #                     white_label_counter += 1
-        #                     white_label_vendors.append(id)
-                                    
-        #         return jsonify({'status_code': 200, 'number_of_envs': len(env_ids), 'white_labeled': white_label_counter, 'white_labeled_vendors': white_label_vendors})        
-        
-        # return jsonify({'error': 'You selected the body-param as disabled'})
     
     else:
         return jsonify({'error': 'Method not allowed'})
