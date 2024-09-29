@@ -37,10 +37,41 @@ AND_DOMAIN = 'AND sd.domain = {}'
 
 GENERAL = 'GENERAL'
 IDENTITY = 'IDENTITY'
-# REGIONS = ['EU', 'US']
-REGIONS = ['EU', 'US', 'CA', 'AP']
+REGIONS = ['EU', 'US', 'CA']
+# REGIONS = ['EU', 'US', 'CA', 'AP']
 
-# TODO:
-# 1. edge case :: in search in all regions when an account is under few regions (for example - Talon) 
-# 3. add creds for CA and AU
-# 4. add a logger
+
+
+# P1 # search vendors by email
+CHECK_IF_EMAIL_EXISTS_IN_REGION = 'SELECT u.tenantId FROM frontegg_identity.users u WHERE u.email={} AND u.vendorId={}'
+# P2 # get vendors by accountId
+GET_VENDORS_IDS_BY_ACCOUNT_TENANT_ID = 'SELECT v.id, v.environmentName, v.loginURL, v.appURL FROM frontegg_vendors.vendors v JOIN frontegg_vendors.accounts a ON  a.id = v.accountId WHERE a.accountTenantId={}'
+
+# P3 # get tenatns    
+GET_TENTANS_OF_VENDOR = 'SELECT x.* FROM frontegg_backoffice.accounts x WHERE x.vendorId={}'
+
+# P3.3 # get saml config id
+GET_SAML_GROUPS_BY_SSO_ID ='SELECT * FROM frontegg_team_management.saml_groups sg WHERE sg.samlConfigId={}'
+
+# P3 # get applications of vendor
+GET_VENDOR_APPLICATIONS ='SELECT * FROM frontegg_applications.applications a WHERE a.vendorId={}'
+# P3.1 # get all tenants under an application
+GET_TENANTS_OF_APPLICATIONS ='SELECT a.name, appt.tenantId FROM frontegg_applications.applications_tenants appt JOIN frontegg_backoffice.accounts a ON appt.tenantId = a.accountId WHERE appt.appId={}'
+
+# P3 # get builder config
+GET_BUILDER_CONFIGURATIONS = 'SELECT be.config, be.env FROM frontegg_dashboard_env_builder.builder_environment be WHERE be.accountId={} ORDER BY be.createdAt DESC LIMIT 1'
+
+# Allowed Origins
+GET_ALLOWED_ORIGINS= 'SELECT ao.origin FROM frontegg_vendors.allowed_origins ao WHERE ao.vendorId={}'
+
+# Custom domain
+GET_CUSTOM_DOMAIN = 'SELECT cd.domain FROM frontegg_vendors.custom_domains cd WHERE cd.vendorId={}'
+
+# Impersonation
+GET_IMPERSONATION_SETTINGS = 'SELECT ic.enabled, ic.sendEmailNotifications, ic.allowTenantAudits FROM frontegg_identity.impersonation_configuration ic WHERE ic.vendorId={}'
+
+# Groups
+GET_GROUPS = 'SELECT * FROM frontegg_identity.groups g WHERE g.tenantId={}'
+
+# SSO
+GET_SSO_CONFIGS = 'SELECT sc.enabled,sc.validated , sd.domain, sc.spEntityId, sc.acsUrl, sc.ssoEndpoint, sc.createdAt FROM frontegg_team_management.sso_domains sd JOIN frontegg_team_management.sso_configs sc  ON sd.ssoConfigId = sc.id WHERE sd.tenantId={}'
